@@ -1,0 +1,54 @@
+version: '3.8'
+services:
+
+  redis:
+    image: 'redis:7.2.5-alpine'
+    container_name: 'redis'
+    ports:
+      - '6380:6379'
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+
+  nodeapp:
+    depends_on:
+      - redis
+      - mysql
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3002:3000'
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6380
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=myuser
+      - MYSQL_DATABASE=mealplan
+      - MYSQL_ROOT_PASSWORD=my-secret-pw
+    networks:
+      - app-network
+  mysql:
+    image: 'mysql:latest'
+    restart: always
+    container_name: 'mysql-container'
+    environment: 
+      MYSQL_ROOT_PASSWORD: my-secret-pw  
+      MYSQL_DATABASE: mealplan
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: pass
+    ports:
+      - '8004:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+
+volumes:
+  redis-data:
+  mysql-data:
+
+networks:
+  app-network:
+    driver: bridge
