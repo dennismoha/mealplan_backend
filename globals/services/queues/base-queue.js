@@ -16,7 +16,7 @@ class BaseQueue {
       throw new Error('Cannot instantiate abstract class');
     }
     this.queue = new Queue(queuename, {
-      redis: { port: 6379, host: '127.0.0.1' }
+      redis: { port: 6379, host: 'redis' }
     });
 
     bullAdapters.push(new BullAdapter(this.queue));

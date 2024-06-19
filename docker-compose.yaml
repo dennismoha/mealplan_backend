@@ -30,7 +30,7 @@ services:
     networks:
       - app-network
   mysql:
-    image: 'mysql:latest'
+    image: 'mysql:8'
     restart: always
     container_name: 'mysql-container'
     environment: 
