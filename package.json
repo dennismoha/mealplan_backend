@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "NODE_ENV=production pm2 start process.json -i max ",
+    "start": "NODE_ENV=production pm2 start process.json -i 2 ",
     "start-dev": "nodemon app.js",
     "lint:check": "eslint \"./**/*.js\" ",
     "lint:fix": "eslint \"./**/*.js\" --fix ",
