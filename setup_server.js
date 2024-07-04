@@ -130,7 +130,7 @@ class MealPlanServer {
     }
   }
   #startHttpServer(httpServer) {
-    httpServer.listen(3000, () => {
+    httpServer.listen(config.PORT || 3000, () => {
       console.log('app is running well');
     });
   }

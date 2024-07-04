@@ -19,6 +19,7 @@ class Config {
   LOCAL_REDIS_HOST;
   COOKIE_PASSWORD;
   SESSION_NAME;
+  PORT;
 
   constructor() {
     this.MYSQL_HOST = process.env.MYSQL_HOST;
@@ -33,6 +34,7 @@ class Config {
     this.LOCAL_REDIS_HOST=process.env.LOCAL_REDIS_HOST
     this.COOKIE_PASSWORD=process.env.COOKIE_PASSWORD
     this.SESSION_NAME=process.env.SESSION_NAME
+    this.PORT = process.env.PORT
   }
 
   // loop through each config to make sure it's key pair exists
