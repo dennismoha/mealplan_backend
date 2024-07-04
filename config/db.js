@@ -1,6 +1,7 @@
 const mysql = require('mysql2');
 const config = require('../config')
-
+const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 
 
 const pool = mysql.createPool({
@@ -12,7 +13,6 @@ const pool = mysql.createPool({
   multipleStatements: true // if abused may enhance grounds for injection as per the documentation
 });
 
-
-
+const sessionStore = new MySQLStore({}, pool)
 
 module.exports = pool.promise();

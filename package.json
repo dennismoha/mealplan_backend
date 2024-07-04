@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "NODE_ENV=production pm2 start process.json -i max ",
-    "start-dev":"nodemon app.js",
+    "start-dev": "nodemon app.js",
     "lint:check": "eslint \"./**/*.js\" ",
     "lint:fix": "eslint \"./**/*.js\" --fix ",
     "prettier:check": "prettier --check \"./**/*.js\" ",
@@ -25,6 +25,7 @@
     "ejs": "~2.6.1",
     "express": "~4.16.1",
     "express-async-errors": "^3.1.1",
+    "express-mysql-session": "^3.0.2",
     "express-session": "^1.17.3",
     "express-validator": "^5.3.1",
     "helmet": "^7.1.0",

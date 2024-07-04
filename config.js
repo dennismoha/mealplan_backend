@@ -1,4 +1,10 @@
+const path =require('path')
+
+if(process.env.NODE_ENV === 'production'){
+  require('dotenv').config({ path: '.env.production' })
+}
 require('dotenv').config();
+
 
 class Config {
   MYSQL_HOST;
