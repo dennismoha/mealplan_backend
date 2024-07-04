@@ -15,6 +15,7 @@ const cors = require('cors');
 const compression = require('compression');
 const { StatusCodes } = require('http-status-codes');
 const apiStats = require('swagger-stats');
+const config = require('./config');
 
 const usersRouter = require('./routes/auth/users_auth');
 const refreshTokenRouter = require('./routes/auth/refresh_token');
@@ -68,11 +69,11 @@ class MealPlanServer {
     app.use(hpp({ checkQuery: false, checkBody: false }));
     // remember to migrate the secrete to .env
 
-    app.use(cookieParser('chelsea', { signed: true }));
+    app.use(cookieParser(config.COOKIE_PASSWORD, { signed: true }));
     app.use(
       session({
-        name: 'blue',
-        secret: 'chelsea',
+        name: config.SESSION_NAME,
+        secret: config.COOKIE_PASSWORD,
         resave: false,
         saveUninitialized: false
       })
