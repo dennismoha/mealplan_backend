@@ -1,21 +1,26 @@
 const mysql = require('mysql2');
+const config = require('../config')
 
-// setting up mysql pool
-// const pool = mysql.createPool({
-//   host: 'localhost',
-//   user: 'root',
-//   database: 'meal_plan',
-//   password: '@$$Mys256',
-//   multipleStatements: true // if abused may enhance grounds for injection as per the documentation
-// });
+
 
 const pool = mysql.createPool({
-  host: 'mysql',
-  port: '3306',
-  user: 'myuser',
-  password: 'pass',
-  database: 'mealplan'
+  host: config.MYSQL_HOST,
+  user: config.MYSQL_USER,
+  port: config.MYSQL_PORT,
+  database: config.MYSQL_DATABASE,
+  password: config.MYSQL_PASSWORD,
+  multipleStatements: true // if abused may enhance grounds for injection as per the documentation
 });
+
+
+//docker
+// const pool = mysql.createPool({
+//   host: 'mysql',
+//   port: '3306',
+//   user: 'myuser',
+//   password: 'pass',
+//   database: 'mealplan'
+// });
 
 // const pool = mysql.createPool({
 //   host: 'localhost',

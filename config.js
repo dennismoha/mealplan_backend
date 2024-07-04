@@ -2,11 +2,27 @@ require('dotenv').config();
 
 class Config {
   MYSQL_HOST;
+  REDIS_HOST;  
+  MYSQL_USER;
+  MYSQL_DATABASE;
+  MYSQL_PASSWORD;
+  MYSQL_PORT;
   REDIS_HOST;
+  REDIS_PORT;
+  REDIS_PASSWORD;
+  LOCAL_REDIS_HOST;
 
   constructor() {
     this.MYSQL_HOST = process.env.MYSQL_HOST;
     this.REDIS_HOST = process.env.REDIS_HOST;
+    this.MYSQL_USER = process.env.MYSQL_USER
+    this.MYSQL_DATABASE=process.env.MYSQL_DATABASE
+    this.MYSQL_PASSWORD=process.env.MYSQL_PASSWORD
+    this.MYSQL_PORT=process.env.MYSQL_PORT
+    this.REDIS_HOST=process.env.REDIS_HOST
+    this.REDIS_PORT=process.env.REDIS_PORT
+    this.REDIS_PASSWORD=process.env.REDIS_PASSWORD
+    this.LOCAL_REDIS_HOST=process.env.LOCAL_REDIS_HOST
   }
 
   // loop through each config to make sure it's key pair exists
