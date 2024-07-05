@@ -126,3 +126,5 @@
 {"level":"error","message":"error returning food","service":"winston service","timestamp":"2024-06-18 01:33:00"}
 {"level":"error","message":"error returning food","service":"winston service","timestamp":"2024-06-18 09:01:33"}
 {"level":"error","message":"error returning food","service":"winston service","timestamp":"2024-07-04 11:18:47"}
+{"level":"error","message":"error returning food","service":"winston service","timestamp":"2024-07-04 14:40:19"}
+{"level":"error","message":"error returning food","service":"winston service","timestamp":"2024-07-04 14:42:13"}
