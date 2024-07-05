@@ -25,7 +25,7 @@ const refreshTokenRouter = require("./routes/auth/refresh_token");
 const foodCategoryRouter = require("./routes/food_category/food_category_routes");
 const mealTypeRouter = require("./routes/meal_type");
 const mealPlanRouter = require("./routes/meal_plan/meal_plan");
-const meals = require("./routes/meals/meals");
+const mealsRouter = require("./routes/meals/meals");
 const mealmealType = require("./routes/meal_mealtype/meal_mealtype");
 const mealplanTimeRoutes = require("./routes/meal_plan_time/meal_plan_time");
 const foodItemRoutes = require("./routes/food_items/food_items");
@@ -45,7 +45,7 @@ class MealPlanServer {
   start() {
     this.#securityMiddleware(this.#app);
     this.#standardMiddleware(this.#app);
-    this.#swaggerUISetup(this.#app)
+    this.#swaggerUISetup(this.#app);
     this.#routeMiddleware(this.#app);
     this.#apiMonitoring(this.#app);
     this.#globalErrorHandler(this.#app);
@@ -69,14 +69,14 @@ class MealPlanServer {
           version: "1.0.0",
           description: "API Documentation",
         },
-        servers:[
+        servers: [
           {
-            url: 'http://localhost:3000'
+            url: "http://localhost:3000/api",
           },
           {
-            url: 'https://mealplan-backend-1gvk.onrender.com/'
-          }
-        ]
+            url: "https://mealplan-backend-1gvk.onrender.com/",
+          },
+        ],
       },
       // Path to the API docs
       apis: ["./routes/**/*.js"], // Include all JavaScript files in nested folders under 'routes'
@@ -129,22 +129,31 @@ class MealPlanServer {
     app.use(expressValidator());
   }
   #routeMiddleware(app) {
-    let baseurl = "/api/mealplan";
+    let baseUrl = config.BASE_URL
+    console.log('url is ', baseUrl)
+    // Define routes
     app.use("/queues", serverAdapter.getRouter());
 
     app.use("/user", usersRouter);
     app.use("/user/token", refreshTokenRouter);
 
-    app.use("/api/meal/types", mealTypeRouter);
-    app.use(`${baseurl}/plan`, mealPlanRouter);
-    app.use(`${baseurl}/meals`, meals);
-    app.use("/api/meal/meal/type", mealmealType);
-    app.use(`${baseurl}/mealplantimes`, mealplanTimeRoutes);
-    app.use("/api/food/fooditems", foodItemRoutes);
-    app.use("/api/food/variation", foodVariationRoutes);
+    // Meal-related routes
+    app.use(`${baseUrl}/meal/types`, mealTypeRouter);
+    app.use(`/${config.BASE_URL}/meal/plan`, mealPlanRouter);
+    app.use(`${baseUrl}/meal/meals`, mealsRouter);
+    app.use(`${baseUrl}/meal/type`, mealTypeRouter); // Corrected from mealmealType to mealType
+    app.use(`${baseUrl}/meal/plan/times`, mealplanTimeRoutes);
+
+    // Food-related routes
+    app.use(`${baseUrl}/food/fooditems`, foodItemRoutes);
+    app.use(`${baseUrl}/food/variation`, foodVariationRoutes);
+    app.use(`${baseUrl}/food/category`, foodCategoryRouter);
+
+    // Health route
     app.use("/health", dbHealth);
+
     // app.use(verifyJwt); // make sure you add this on top of all the routes that have to use jwt.
-    app.use(`${baseurl}/category`, foodCategoryRouter);
+    //app.use(`${baseUrl}/category`, foodCategoryRouter);
   }
   #globalErrorHandler(app) {
     app.use("*", (req, res) => {

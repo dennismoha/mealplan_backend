@@ -20,6 +20,7 @@ class Config {
   COOKIE_PASSWORD;
   SESSION_NAME;
   PORT;
+  BASE_URL;
 
   constructor() {
     this.MYSQL_HOST = process.env.MYSQL_HOST;
@@ -35,6 +36,7 @@ class Config {
     this.COOKIE_PASSWORD=process.env.COOKIE_PASSWORD
     this.SESSION_NAME=process.env.SESSION_NAME
     this.PORT = process.env.PORT
+    this.BASE_URL = process.env.BASE_URL
   }
 
   // loop through each config to make sure it's key pair exists
