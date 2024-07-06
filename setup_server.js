@@ -18,6 +18,7 @@ const apiStats = require("swagger-stats");
 
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsdoc = require("swagger-jsdoc");
+const YAML = require('yamljs')
 const config = require("./config");
 
 const usersRouter = require("./routes/auth/users_auth");
@@ -34,6 +35,8 @@ const errorHandler = require("./middlewares/custom_errors/error-handler");
 const dbHealth = require("./routes/health/health");
 
 const { serverAdapter } = require("./globals/services/queues/base-queue");
+const swaggerDocument = YAML.load("./openapi.yaml")
+
 
 class MealPlanServer {
   #app;
@@ -61,31 +64,33 @@ class MealPlanServer {
   }
 
   #swaggerUISetup(app) {
-    const swaggerOptions = {
-      swaggerDefinition: {
-        openapi: "3.0.0",
-        info: {
-          title: "Your API",
-          version: "1.0.0",
-          description: "API Documentation",
-        },
-        servers: [
-          {
-            url: "http://localhost:3000/api",
-          },
-          {
-            url: "https://mealplan-backend-1gvk.onrender.com/api",
-          },
-        ],
-      },
-      // Path to the API docs
-      apis: ["./routes/**/*.js"], // Include all JavaScript files in nested folders under 'routes'
-    };
+    // const swaggerOptions = {
+    //   swaggerDefinition: {
+    //     openapi: "3.0.0",
+    //     info: {
+    //       title: "Your API",
+    //       version: "1.0.0",
+    //       description: "API Documentation",
+    //     },
+    //     servers: [
+    //       {
+    //         url: "http://localhost:3000/api",
+    //       },
+    //       {
+    //         url: "https://mealplan-backend-1gvk.onrender.com/api",
+    //       },
+    //     ],
+    //   },
+    //   // Path to the API docs
+    //   apis: ["./routes/**/*.js"], // Include all JavaScript files in nested folders under 'routes'
+    // };
 
-    const swaggerSpec = swaggerJsdoc(swaggerOptions);
+
+    // const swaggerSpec = swaggerJsdoc(swaggerOptions);
+    // const swaggerSpec = swaggerJsdoc(swaggerDocument);
 
     // Serve Swagger UI
-    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
   }
 
   #securityMiddleware(app) {
@@ -139,7 +144,7 @@ class MealPlanServer {
 
     // Meal-related routes
     app.use(`${baseUrl}/meal/types`, mealTypeRouter);
-    app.use(`/${config.BASE_URL}/meal/plan`, mealPlanRouter);
+    app.use(`/${config.BASE_URL}/meal/meal-plan`, mealPlanRouter);
     app.use(`${baseUrl}/meal/meals`, mealsRouter);
     app.use(`${baseUrl}/meal/type`, mealTypeRouter); // Corrected from mealmealType to mealType
     app.use(`${baseUrl}/meal/plan/times`, mealplanTimeRoutes);

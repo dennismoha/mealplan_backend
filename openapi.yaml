@@ -1,0 +1,25 @@
+openapi: 3.0.0
+info:
+  title: meal plan api
+  description: This is a API documentation for the mealplan app
+  version: 1.0.0  
+servers:
+  - url: http://localhost:3000/api
+    description: This is the server for localhost.
+  - url: https://mealplan-backend-1gvk.onrender.com/api
+    description: this is the production server 
+paths:
+    /meal/meal-plan/all:
+      get:
+          summary: This is a get request to return a list of all meal plans
+          description:  This api returns a list of all meal plans
+          responses:
+              200:
+                  description: to test get method
+                  content:
+                    application/json:
+                      schema:
+                        type: array
+                        items:
+                          type: string
+
