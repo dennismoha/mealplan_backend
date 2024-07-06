@@ -74,7 +74,7 @@ class MealPlanServer {
             url: "http://localhost:3000/api",
           },
           {
-            url: "https://mealplan-backend-1gvk.onrender.com/",
+            url: "https://mealplan-backend-1gvk.onrender.com/api",
           },
         ],
       },
