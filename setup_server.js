@@ -88,6 +88,11 @@ class MealPlanServer {
 
     // const swaggerSpec = swaggerJsdoc(swaggerOptions);
     // const swaggerSpec = swaggerJsdoc(swaggerDocument);
+    // let baseurl = process.env.NODE_ENV === 'production' ? 'https://mealplan-backend-1gvk.onrender.com/api' : 'http://localhost:3000/api'
+    // swaggerDocument.servers = [{url: baseurl}]
+
+    // console.log(swaggerDocument)
+
 
     // Serve Swagger UI
     app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));

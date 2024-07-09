@@ -4,59 +4,45 @@ info:
   description: This is a API documentation for the mealplan app
   version: 1.0.0  
 tags:
-  - name: meal-plan
+  - meal plan: 
     description: mealplan
-  - name: meal plan time interval
-    description: Time interval for each meal plan. The name can be a unique string chosen by the user or days of the week, months etc
-  - name: category
+  - category:
     description: category of meals
+  - meal plan time intervals:
+    description: Time interval for each meal plan. The name can be a unique string chosen by the user or days of the week, months etc
 servers:
   - url: http://localhost:3000/api
     description: This is the server for localhost.
   - url: https://mealplan-backend-1gvk.onrender.com/api
-    description: this is the production server  
+    description: this is the production server 
 paths:
-    /meal/meal-plan/time-intervals/:  
-      get:
-        tags:
-          - meal plan time interval
-        summary: This endpoint returns all time intervals contained in the db
-        description: These time intervals are intervals of each specific meal plan. Each specific meal-plan is made for 7 days in a week. The interval can be any specific unique name chosen by the user       
-        operationId: findPetsByStatus
-        parameters: []          
-        responses:
-          '200':
-            description: successful operation
-            content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                      type: object
-                      properties:
-                        idmealPlanWeek:
-                          type: integer
-                          example: 1
-                        meal_plan_name:
-                          type: string
-                          example: "september week 1"
-                        created_on:
-                          type: string
-                          format: date-time
-                          example: "2023-11-23T14:45:33.000Z" 
-                        updated_at:
-                          type: string
-                          format: date-time
-                          example: "2023-11-23T14:45:33.000Z"      
-          '500':
-            description: server error
-            
+    # /meal/meal-plan/time-intervals:
+    #   get:  
+    #     tags:
+    #       - meal plan time intervals:
+    #     summary: This endpoint returns all time intervals contained in the db
+    #     description: These time intervals are intervals of each specific meal plan. Each specific meal-plan is made for 7 days in a week. The interval can be any specific unique name chosen by the user
+    #     parameters: none
+    #     responses:
+    #       200:
+    #         description: This should return a list of all time intervals in the db
+    #         content:
+    #           application/json:
+    #             schema:
+    #               type: array
+    #               items:
+    #                 $ref: '#/components/schemas/Meal-Plan-time-interval'
+          
+
+
+
     /meal/meal-plan/all:
       get:
           tags: 
             - meal plan
           summary: This is a get request to return a list of all meal plans
           description:  This api returns a list of all meal plans
+          parameters: none
           responses:
               200:
                   description: to test get method
@@ -113,24 +99,24 @@ paths:
                                   breakfast: chapo chai
                                   evening_break: cocoa
                                   morning_break: loaf coffee
-                          
-    # /meal/meal-plan/{mealplankey}/{day}:
-    #   put:
-    #     tags:
-    #       - meal plan
-    #     summary: This endpoint updates a single mealplan row
-    #     description: This endpoint updates a single mealplan row. Eg if you want to update a meal on a single day of the week. Meal plan key is what makes 
-    #     requestBody:
-    #       description: The request body will contain of all meals for that specific day
-    #       required: true
-    #       content:
-    #         application/json:
-    #           schema: 
-    #             $ref: '#/components/schemas/updateMealPlan'
-    #     responses:
-    #         200:
-                                                          
-                                                
+
+    /meal/meal-plan/{mealplankey}/{day}:
+      put:
+        tags:
+          - meal plan
+        summary: This endpoint updates a single mealplan row
+        description: This endpoint updates a single mealplan row. Eg if you want to update a meal on a single day of the week. Meal plan key is what makes 
+        requestBody:
+          description: The request body will contain of all meals for that specific day
+          required: true
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/updateMealPlan'
+        responses:
+            200:
+
+
 components:
   schemas:
     Meal-Plan-time-interval:
@@ -166,4 +152,9 @@ components:
           supper:
             type: string
           mealplan_key:
-            type: string
+            type: 
+    
+
+
+                                                          
+                                                
