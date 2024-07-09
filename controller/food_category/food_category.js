@@ -47,7 +47,8 @@ exports.getSingleCategory = async (req, res) => {
     await categoryRedis.saveCategoryToCache(id, Category);
   }
   //return directly if there is cache hit
-  res.status(StatusCodes.OK).json({ message: 'success', category: Category });
+  // res.status(StatusCodes.OK).json({ message: 'success', category: Category });
+   res.status(StatusCodes.OK).send(getSuccessMessage(200, Category))
 };
 
 exports.createFoodCategory = async (req, res) => {
