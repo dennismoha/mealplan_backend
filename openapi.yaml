@@ -3,23 +3,157 @@ info:
   title: meal plan api
   description: This is a API documentation for the mealplan app
   version: 1.0.0  
+tags:
+  - meal plan: 
+    description: mealplan
+  - category:
+    description: category of meals
+  - meal plan time intervals:
+    description: Time interval for each meal plan. The name can be a unique string chosen by the user or days of the week, months etc
 servers:
   - url: http://localhost:3000/api
     description: This is the server for localhost.
   - url: https://mealplan-backend-1gvk.onrender.com/api
     description: this is the production server 
 paths:
+    /meal/meal-plan/time-intervals:
+      get:  
+        tags:
+          - meal plan time intervals:
+        summary: This endpoint returns all time intervals contained in the db
+        description: These time intervals are intervals of each specific meal plan. Each specific meal-plan is made for 7 days in a week. The interval can be any specific unique name chosen by the user
+        parameters: none
+        responses:
+          200:
+            description: This should return a list of all time intervals in the db
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Meal-Plan-time-interval'
+
+
+
     /meal/meal-plan/all:
       get:
+          tags: 
+            - meal plan
           summary: This is a get request to return a list of all meal plans
           description:  This api returns a list of all meal plans
+          parameters: none
           responses:
               200:
                   description: to test get method
                   content:
                     application/json:
                       schema:
-                        type: array
-                        items:
-                          type: string
+                        $ref: './components/schemas/meal_plan.yaml'
+                      examples:
+                        meals:  
+                          value:                     
+                          - mealplankey: week2
+                            idmealPlanWeek: 2
+                            data:
+                              daysOfWeek:
+                                Friday:
+                                  lunch: Chicken salad
+                                  supper: Grilled fish
+                                  breakfast: Eggs and toast
+                                  evening_break: Yogurt
+                                  morning_break: Fruit
+                                Monday:
+                                  lunch: Chicken salad
+                                  supper: Grilled fish
+                                  breakfast: Biscuits
+                                  evening_break: Yogurt
+                                  morning_break: Fruit
+                                Sunday:
+                                  lunch: Chicken salad
+                                  supper: Grilled fish
+                                  breakfast: Biscuits
+                                  evening_break: Yogurt
+                                  morning_break: Fruit
+                                Tuesday:
+                                  lunch: mukimo
+                                  supper: Githeri avocado
+                                  breakfast: maji
+                                  evening_break: coffee
+                                  morning_break: chocolate
+                                Saturday:
+                                  lunch: Chicken salad
+                                  supper: Grilled fish
+                                  breakfast: Eggs and toast
+                                  evening_break: Yogurt
+                                  morning_break: Fruit
+                                Thursday:
+                                  lunch: pizza
+                                  supper: fruits and greens
+                                  breakfast: cocoa
+                                  evening_break: coffee
+                                  morning_break: juice cola
+                                Wednesday:
+                                  lunch: ugali
+                                  supper: minji rice
+                                  breakfast: chapo chai
+                                  evening_break: cocoa
+                                  morning_break: loaf coffee
 
+    /meal/meal-plan/{mealplankey}/{day}:
+      put:
+        tags:
+          - meal plan
+        summary: This endpoint updates a single mealplan row
+        description: This endpoint updates a single mealplan row. Eg if you want to update a meal on a single day of the week. Meal plan key is what makes 
+        requestBody:
+          description: The request body will contain of all meals for that specific day
+          required: true
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/updateMealPlan'
+        responses:
+            200:
+
+
+components:
+  schemas:
+    Meal-Plan-time-interval:
+      type: object
+      properties:
+        idmealPlanWeek:
+          type: integer
+          example: 1
+        meal_plan_name:
+          type: string
+          example: "september week 1"
+        created_on:
+          type: string
+          format: date-time
+          example: null
+        updated_at:
+          type: string
+          format: date-time
+          example: "2023-11-23T14:45:33.000Z"
+    updateMealPlan:
+        type: object
+        properties:
+          day_of_week: 
+            type: string
+          breakfast:
+            type: string
+          morning_break:
+            type: string
+          lunch:
+            type: string
+          evening_break:
+            type: string
+          supper:
+            type: string
+          mealplan_key:
+            type: 
+    
+
+
+                                                          
+                                                
