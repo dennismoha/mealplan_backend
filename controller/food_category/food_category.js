@@ -10,18 +10,17 @@ const ConflictError = require('../../middlewares/custom_errors/conflict_error');
 const foodCategory = require('../../globals/services/db/food_category_db');
 const { CATEGORY_UPDATE, CATEGORY_DELETE } = require('../../constants');
 const databaseError = require('#mealplan/middlewares/custom_errors/database_error.js');
+const { getSuccessMessage } = require('#mealplan/middlewares/custom_success/sucess_message.js');
 
 const foodCategoryQuery = new FoodCategoryQuery();
 
 exports.getAllFoodCategories = async (req, res) => {
   const sql = 'SELECT * FROM foodcategory';
-  // select all from the cache first.
-
-  // const catgories = await categoryRedis.selectAllCategoriesFromCache();
-  // console.log('categories from cache are ', catgories);
+ 
   try {
     const foodcategory = await foodCategoryQuery.getAll(sql);
-    res.status(StatusCodes.OK).json(foodcategory);
+    res.status(StatusCodes.OK).send(getSuccessMessage(200, foodcategory))
+    
   } catch (error) {
     throw new databaseError('something went wrong');   
   }

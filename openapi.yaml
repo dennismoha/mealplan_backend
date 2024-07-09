@@ -246,37 +246,48 @@ components:
     FoodCategory:
       type: object
       properties:
-        idFoodCategory:
-          type: integer
-          description: The unique identifier for the food category.
-          example: 2
-        category_name:
+        statusCode: 
           type: string
-          description: The name of the food category.
-          example: veges
-        description:
+          description: status code by default 200
+          example: 200
+        data:
+          type: object
+          properties:
+            idFoodCategory:
+              type: integer
+              description: The unique identifier for the food category.
+              example: 2
+            category_name:
+              type: string
+              description: The name of the food category.
+              example: veges
+            description:
+              type: string
+              description: Description of the food category.
+              example: this is the fruits category
+            image_url:
+              type: string
+              format: uri
+              description: URL to the image of the food category.
+              example: http://wwww.com
+            food_categoryID:
+              type: string
+              description: The UUID of the food category.
+              example: dac91541-f25a-11ee-8de4-f816542ce27d
+            created_on:
+              type: string
+              format: date-time
+              description: Date and time when the food category was created.
+              example: "2024-04-04T08:10:52.000Z"
+            updated_on:
+              type: string
+              format: date-time
+              description: Date and time when the food category was last updated.
+              example: "2024-04-04T08:10:52.000Z"
+        status:
           type: string
-          description: Description of the food category.
-          example: this is the fruits category
-        image_url:
-          type: string
-          format: uri
-          description: URL to the image of the food category.
-          example: http://wwww.com
-        food_categoryID:
-          type: string
-          description: The UUID of the food category.
-          example: dac91541-f25a-11ee-8de4-f816542ce27d
-        created_on:
-          type: string
-          format: date-time
-          description: Date and time when the food category was created.
-          example: "2024-04-04T08:10:52.000Z"
-        updated_on:
-          type: string
-          format: date-time
-          description: Date and time when the food category was last updated.
-          example: "2024-04-04T08:10:52.000Z"
+          description: success status code
+          example: success
       required:
         - idFoodCategory
         - category_name
