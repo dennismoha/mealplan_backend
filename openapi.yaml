@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: meal plan api
   description: This is a API documentation for the mealplan app
-  version: 1.0.0  
+  version: 1.0.0
 tags:
   - name: meal-plan
     description: mealplan
@@ -14,144 +14,193 @@ tags:
 #   - url: http://localhost:3000/api
 #     description: This is the server for localhost.
 #   - url: https://mealplan-backend-1gvk.onrender.com/api
-#     description: this is the production server  
+#     description: this is the production server
 paths:
-    /meal/meal-plan/time-intervals/:  
-      get:
-        tags:
-          - meal plan time interval
-        summary: This endpoint returns all time intervals contained in the db
-        description: These time intervals are intervals of each specific meal plan. Each specific meal-plan is made for 7 days in a week. The interval can be any specific unique name chosen by the user       
-        operationId: return a list of meal plans
-        parameters: []          
-        responses:
-          '200':
-            description: successful operation
+  /meal/meal-plan/time-intervals/:
+    get:
+      tags:
+        - meal plan time interval
+      summary: This endpoint returns all time intervals contained in the db
+      description: These time intervals are intervals of each specific meal plan. Each specific meal-plan is made for 7 days in a week. The interval can be any specific unique name chosen by the user
+      operationId: return a list of meal plans
+      parameters: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    idmealPlanWeek:
+                      type: integer
+                      example: 1
+                    meal_plan_name:
+                      type: string
+                      example: "september week 1"
+                    created_on:
+                      type: string
+                      format: date-time
+                      example: "2023-11-23T14:45:33.000Z"
+                    updated_at:
+                      type: string
+                      format: date-time
+                      example: "2023-11-23T14:45:33.000Z"
+        "500":
+          description: server error
+
+  /meal/meal-plan/all:
+    get:
+      tags:
+        - meal-plan
+      summary: This is a get request to return a list of all meal plans
+      description: This api returns a list of all meal plans
+      responses:
+        200:
+          description: meal plan get method
+          content:
+            application/json:
+              schema:
+                $ref: "./components/schemas/meal_plan.yaml"
+              examples:
+                meals:
+                  value:
+                    - mealplankey: week2
+                      idmealPlanWeek: 2
+                      data:
+                        daysOfWeek:
+                          Friday:
+                            lunch: Chicken salad
+                            supper: Grilled fish
+                            breakfast: Eggs and toast
+                            evening_break: Yogurt
+                            morning_break: Fruit
+                          Monday:
+                            lunch: Chicken salad
+                            supper: Grilled fish
+                            breakfast: Biscuits
+                            evening_break: Yogurt
+                            morning_break: Fruit
+                          Sunday:
+                            lunch: Chicken salad
+                            supper: Grilled fish
+                            breakfast: Biscuits
+                            evening_break: Yogurt
+                            morning_break: Fruit
+                          Tuesday:
+                            lunch: mukimo
+                            supper: Githeri avocado
+                            breakfast: maji
+                            evening_break: coffee
+                            morning_break: chocolate
+                          Saturday:
+                            lunch: Chicken salad
+                            supper: Grilled fish
+                            breakfast: Eggs and toast
+                            evening_break: Yogurt
+                            morning_break: Fruit
+                          Thursday:
+                            lunch: pizza
+                            supper: fruits and greens
+                            breakfast: cocoa
+                            evening_break: coffee
+                            morning_break: juice cola
+                          Wednesday:
+                            lunch: ugali
+                            supper: minji rice
+                            breakfast: chapo chai
+                            evening_break: cocoa
+                            morning_break: loaf coffee
+
+  # food category
+  /food/category/:
+    get:
+      tags:
+        - food category
+      summary: This endpoint will return a list of all categories
+      description: category description
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - type: string
+                    - $ref: "#/components/schemas/FoodCategoryResponse"
+        "500":
+          description: "something went wrong"
+
+    post:
+      tags:
+        - food category
+      summary: This endpoint will enable adding of a new food category
+      description: Add a new category
+      operationId: add new category
+      requestBody:
+        description: Add a new category
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddNewFoodCategory"
+        required: true
+      responses:
+        "201":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                      message: 
+                        type: string
+                        example:  'category added successfully'
+        "409":
+            description: food category with that name exists
             content:
               application/json:
                 schema:
-                  type: array
-                  items:
-                      type: object
-                      properties:
-                        idmealPlanWeek:
-                          type: integer
-                          example: 1
-                        meal_plan_name:
-                          type: string
-                          example: "september week 1"
-                        created_on:
-                          type: string
-                          format: date-time
-                          example: "2023-11-23T14:45:33.000Z" 
-                        updated_at:
-                          type: string
-                          format: date-time
-                          example: "2023-11-23T14:45:33.000Z"      
-          '500':
-            description: server error
-            
-    /meal/meal-plan/all:
-      get:
-          tags: 
-            - meal plan
-          summary: This is a get request to return a list of all meal plans
-          description:  This api returns a list of all meal plans
-          responses:
-              200:
-                  description: meal plan get method
-                  content:
-                    application/json:
-                      schema:
-                        $ref: './components/schemas/meal_plan.yaml'
-                      examples:
-                        meals:  
-                          value:                     
-                          - mealplankey: week2
-                            idmealPlanWeek: 2
-                            data:
-                              daysOfWeek:
-                                Friday:
-                                  lunch: Chicken salad
-                                  supper: Grilled fish
-                                  breakfast: Eggs and toast
-                                  evening_break: Yogurt
-                                  morning_break: Fruit
-                                Monday:
-                                  lunch: Chicken salad
-                                  supper: Grilled fish
-                                  breakfast: Biscuits
-                                  evening_break: Yogurt
-                                  morning_break: Fruit
-                                Sunday:
-                                  lunch: Chicken salad
-                                  supper: Grilled fish
-                                  breakfast: Biscuits
-                                  evening_break: Yogurt
-                                  morning_break: Fruit
-                                Tuesday:
-                                  lunch: mukimo
-                                  supper: Githeri avocado
-                                  breakfast: maji
-                                  evening_break: coffee
-                                  morning_break: chocolate
-                                Saturday:
-                                  lunch: Chicken salad
-                                  supper: Grilled fish
-                                  breakfast: Eggs and toast
-                                  evening_break: Yogurt
-                                  morning_break: Fruit
-                                Thursday:
-                                  lunch: pizza
-                                  supper: fruits and greens
-                                  breakfast: cocoa
-                                  evening_break: coffee
-                                  morning_break: juice cola
-                                Wednesday:
-                                  lunch: ugali
-                                  supper: minji rice
-                                  breakfast: chapo chai
-                                  evening_break: cocoa
-                                  morning_break: loaf coffee
-                          
-    # food category
-    /food/category/:
-      get:  
-        tags:
-          - food category
-        summary: This endpoint will return a list of all categories
-        description: category description
-        responses:
-          '200':  
-               description: successful operation
-               content: 
-                  application/json:
-                      schema:
-                        type: array
-                        items:
-                           $ref: '#/components/schemas/FoodCategory'
+                  $ref: "#/components/schemas/Error"
+                examples:
+                  foodCategoryConflict:
+                    value:
+                      errors:
+                        name: conflictError
+                        message: "Food category already exists"
+        "400":
+            description: The request body is missing required fields
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:                  
+                  foodCategoryResourceBodyMissingFields:
+                    value:
+                      errors:
+                        name: badRequest
+                        message: "description cannot be empty"
 
 
-        
-              
-   
-    # /meal/meal-plan/{mealplankey}/{day}:
-    #   put:
-    #     tags:
-    #       - meal plan
-    #     summary: This endpoint updates a single mealplan row
-    #     description: This endpoint updates a single mealplan row. Eg if you want to update a meal on a single day of the week. Meal plan key is what makes 
-    #     requestBody:
-    #       description: The request body will contain of all meals for that specific day
-    #       required: true
-    #       content:
-    #         application/json:
-    #           schema: 
-    #             $ref: '#/components/schemas/updateMealPlan'
-    #     responses:
-    #         200:
-                                                        
-                                                
+  # /meal/meal-plan/{mealplankey}/{day}:
+  #   put:
+  #     tags:
+  #       - meal plan
+  #     summary: This endpoint updates a single mealplan row
+  #     description: This endpoint updates a single mealplan row. Eg if you want to update a meal on a single day of the week. Meal plan key is what makes
+  #     requestBody:
+  #       description: The request body will contain of all meals for that specific day
+  #       required: true
+  #       content:
+  #         application/json:
+  #           schema:
+  #             $ref: '#/components/schemas/updateMealPlan'
+  #     responses:
+  #         200:
+
 components:
   schemas:
     Meal-Plan-time-interval:
@@ -172,23 +221,23 @@ components:
           format: date-time
           example: "2023-11-23T14:45:33.000Z"
     updateMealPlan:
-        type: object
-        properties:
-          day_of_week: 
-            type: string
-          breakfast:
-            type: string
-          morning_break:
-            type: string
-          lunch:
-            type: string
-          evening_break:
-            type: string
-          supper:
-            type: string
-          mealplan_key:
-            type: string
-            
+      type: object
+      properties:
+        day_of_week:
+          type: string
+        breakfast:
+          type: string
+        morning_break:
+          type: string
+        lunch:
+          type: string
+        evening_break:
+          type: string
+        supper:
+          type: string
+        mealplan_key:
+          type: string
+
     FoodCategory:
       type: object
       properties:
@@ -231,3 +280,44 @@ components:
         - food_categoryID
         - created_on
         - updated_on
+
+    EmptyResponse:
+      type: array
+      items: {}
+      description: An empty array indicating no objects in array
+
+    FoodCategoryResponse:
+      oneOf:
+        - type: array
+          items:
+            $ref: "#/components/schemas/FoodCategory"
+            description: An Array of food categories
+        - $ref: "#/components/schemas/EmptyResponse"
+          description: An empty array if no food categories are found.
+
+    AddNewFoodCategory:
+      type: object
+      properties:
+        categoryName:
+          type: string
+          description: This is the name of the category
+          example: fruits
+        description:
+          type: string
+          description: This is the description of the category
+          example: fruits are vey rich in vitamin D
+        imageURL:
+          type: string
+          description: this is a url string for the image that contains a category
+          example: https://www.orange.com/orange.jpeg
+
+    Error:
+            type: object
+            properties:
+              errors:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  message:
+                    type: string

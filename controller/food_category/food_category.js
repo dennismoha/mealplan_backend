@@ -9,6 +9,7 @@ const { StatusCodes } = require('http-status-codes');
 const ConflictError = require('../../middlewares/custom_errors/conflict_error');
 const foodCategory = require('../../globals/services/db/food_category_db');
 const { CATEGORY_UPDATE, CATEGORY_DELETE } = require('../../constants');
+const databaseError = require('#mealplan/middlewares/custom_errors/database_error.js');
 
 const foodCategoryQuery = new FoodCategoryQuery();
 
@@ -20,9 +21,9 @@ exports.getAllFoodCategories = async (req, res) => {
   // console.log('categories from cache are ', catgories);
   try {
     const foodcategory = await foodCategoryQuery.getAll(sql);
-    res.json(foodcategory);
+    res.status(StatusCodes.OK).json(foodcategory);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    throw new databaseError('something went wrong');   
   }
 };
 
@@ -52,17 +53,18 @@ exports.getSingleCategory = async (req, res) => {
 
 exports.createFoodCategory = async (req, res) => {
   const { categoryName, description, imageURL } = req.body;
-
+  console.log('checking if category exists before saving')
   // Check if the food category already exists
   const checkIfExistsSql = 'SELECT * FROM foodcategory WHERE category_name = ?';
   const existingFoodCategory = await foodCategoryQuery.checkIfRecordExists(checkIfExistsSql, [categoryName]);
 
+  console.log('existing food category is ', existingFoodCategory)
   if (existingFoodCategory.length !== 0) {
     throw new ConflictError('Food category already exists');
   }
 
   categoryQueue.addCategoryJob('addCategoriesToDb', req.body);
-  res.status(StatusCodes.OK).json({ message: 'category added successfully' });
+  res.status(StatusCodes.CREATED).json({ message: 'category added successfully' });
 };
 
 exports.updateFoodCategory = async (req, res) => {
