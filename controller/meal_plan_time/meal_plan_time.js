@@ -1,5 +1,7 @@
 // mealplantimeController.js
-const IndexQuery = require('../query_utiltity/index');
+
+const IndexQuery = require('#mealplan/globals/services/db/db_query_utilities.js')
+
 
 const indexQuery = new IndexQuery();
 

@@ -63,35 +63,11 @@ class MealPlanServer {
     );
   }
 
-  #swaggerUISetup(app) {
-    // const swaggerOptions = {
-    //   swaggerDefinition: {
-    //     openapi: "3.0.0",
-    //     info: {
-    //       title: "Your API",
-    //       version: "1.0.0",
-    //       description: "API Documentation",
-    //     },
-    //     servers: [
-    //       {
-    //         url: "http://localhost:3000/api",
-    //       },
-    //       {
-    //         url: "https://mealplan-backend-1gvk.onrender.com/api",
-    //       },
-    //     ],
-    //   },
-    //   // Path to the API docs
-    //   apis: ["./routes/**/*.js"], // Include all JavaScript files in nested folders under 'routes'
-    // };
+  #swaggerUISetup(app) {   
+    let baseurl = process.env.NODE_ENV === 'production' ? 'https://mealplan-backend-1gvk.onrender.com/api' : 'http://localhost:3000/api'
+    swaggerDocument.servers = [{url: baseurl}]
 
-
-    // const swaggerSpec = swaggerJsdoc(swaggerOptions);
-    // const swaggerSpec = swaggerJsdoc(swaggerDocument);
-    // let baseurl = process.env.NODE_ENV === 'production' ? 'https://mealplan-backend-1gvk.onrender.com/api' : 'http://localhost:3000/api'
-    // swaggerDocument.servers = [{url: baseurl}]
-
-    // console.log(swaggerDocument)
+    console.log(swaggerDocument)
 
 
     // Serve Swagger UI
@@ -157,7 +133,7 @@ class MealPlanServer {
     // Food-related routes
     app.use(`${baseUrl}/food/fooditems`, foodItemRoutes);
     app.use(`${baseUrl}/food/variation`, foodVariationRoutes);
-    app.use(`${baseUrl}/food/category`, foodCategoryRouter);
+    app.use(`/${config.BASE_URL}/food/category`, foodCategoryRouter);
 
     // Health route
     app.use("/health", dbHealth);

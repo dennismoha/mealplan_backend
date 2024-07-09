@@ -8,13 +8,13 @@ tags:
     description: mealplan
   - name: meal plan time interval
     description: Time interval for each meal plan. The name can be a unique string chosen by the user or days of the week, months etc
-  - name: category
-    description: category of meals
-servers:
-  - url: http://localhost:3000/api
-    description: This is the server for localhost.
-  - url: https://mealplan-backend-1gvk.onrender.com/api
-    description: this is the production server  
+  - name: food category
+    description: contains all foods in the meal plan site
+# servers:
+#   - url: http://localhost:3000/api
+#     description: This is the server for localhost.
+#   - url: https://mealplan-backend-1gvk.onrender.com/api
+#     description: this is the production server  
 paths:
     /meal/meal-plan/time-intervals/:  
       get:
@@ -22,7 +22,7 @@ paths:
           - meal plan time interval
         summary: This endpoint returns all time intervals contained in the db
         description: These time intervals are intervals of each specific meal plan. Each specific meal-plan is made for 7 days in a week. The interval can be any specific unique name chosen by the user       
-        operationId: findPetsByStatus
+        operationId: return a list of meal plans
         parameters: []          
         responses:
           '200':
@@ -59,7 +59,7 @@ paths:
           description:  This api returns a list of all meal plans
           responses:
               200:
-                  description: to test get method
+                  description: meal plan get method
                   content:
                     application/json:
                       schema:
@@ -114,6 +114,27 @@ paths:
                                   evening_break: cocoa
                                   morning_break: loaf coffee
                           
+    # food category
+    /food/category/:
+      get:  
+        tags:
+          - food category
+        summary: This endpoint will return a list of all categories
+        description: category description
+        responses:
+          '200':  
+               description: successful operation
+               content: 
+                  application/json:
+                      schema:
+                        type: array
+                        items:
+                           $ref: '#/components/schemas/FoodCategory'
+
+
+        
+              
+   
     # /meal/meal-plan/{mealplankey}/{day}:
     #   put:
     #     tags:
@@ -129,7 +150,7 @@ paths:
     #             $ref: '#/components/schemas/updateMealPlan'
     #     responses:
     #         200:
-                                                          
+                                                        
                                                 
 components:
   schemas:
@@ -167,3 +188,46 @@ components:
             type: string
           mealplan_key:
             type: string
+            
+    FoodCategory:
+      type: object
+      properties:
+        idFoodCategory:
+          type: integer
+          description: The unique identifier for the food category.
+          example: 2
+        category_name:
+          type: string
+          description: The name of the food category.
+          example: veges
+        description:
+          type: string
+          description: Description of the food category.
+          example: this is the fruits category
+        image_url:
+          type: string
+          format: uri
+          description: URL to the image of the food category.
+          example: http://wwww.com
+        food_categoryID:
+          type: string
+          description: The UUID of the food category.
+          example: dac91541-f25a-11ee-8de4-f816542ce27d
+        created_on:
+          type: string
+          format: date-time
+          description: Date and time when the food category was created.
+          example: "2024-04-04T08:10:52.000Z"
+        updated_on:
+          type: string
+          format: date-time
+          description: Date and time when the food category was last updated.
+          example: "2024-04-04T08:10:52.000Z"
+      required:
+        - idFoodCategory
+        - category_name
+        - description
+        - image_url
+        - food_categoryID
+        - created_on
+        - updated_on

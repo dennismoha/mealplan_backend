@@ -2,6 +2,9 @@
   "name": "meal-plan",
   "version": "0.0.0",
   "private": true,
+  "imports": {
+    "#mealplan/*.js": "./*.js"
+  },
   "scripts": {
     "start": "NODE_ENV=production node app.js ",
     "start-dev": "NODE_ENV=development nodemon app.js",
@@ -56,4 +59,5 @@
     "nodemon": "^3.0.1",
     "prettier": "^3.0.3"
   }
+
 }
