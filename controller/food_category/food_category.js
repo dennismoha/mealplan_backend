@@ -63,7 +63,7 @@ exports.createFoodCategory = async (req, res) => {
   }
 
   categoryQueue.addCategoryJob('addCategoriesToDb', req.body);
-  res.status(StatusCodes.CREATED).json({ message: 'category added successfully' });
+  res.status(StatusCodes.CREATED).send(getSuccessMessage(201, []))
 };
 
 exports.updateFoodCategory = async (req, res) => {

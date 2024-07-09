@@ -161,9 +161,18 @@ paths:
               schema:
                   type: object
                   properties:
-                      message: 
+                      statusCode: 
                         type: string
-                        example:  'category added successfully'
+                        example:  '201'
+                      data:
+                        type: array
+                        items: {}
+                        example: []
+                        description: an empty data object is returned
+                      status:
+                        type: string
+                        example: success
+
         "409":
             description: food category with that name exists
             content:
