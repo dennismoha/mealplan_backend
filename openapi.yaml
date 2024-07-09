@@ -128,10 +128,15 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items:                  
                   oneOf:
-                    - type: string
-                    - $ref: "#/components/schemas/FoodCategoryResponse"
+                  - type: array
+                    items:
+                      $ref: "#/components/schemas/FoodCategory"
+                      description: An Array of food categories
+                  - $ref: "#/components/schemas/EmptyResponse"
+                    description: An empty array if no food categories are found.
+
         "500":
           description: "something went wrong"
 
@@ -284,16 +289,9 @@ components:
     EmptyResponse:
       type: array
       items: {}
+      example: []
       description: An empty array indicating no objects in array
 
-    FoodCategoryResponse:
-      oneOf:
-        - type: array
-          items:
-            $ref: "#/components/schemas/FoodCategory"
-            description: An Array of food categories
-        - $ref: "#/components/schemas/EmptyResponse"
-          description: An empty array if no food categories are found.
 
     AddNewFoodCategory:
       type: object
