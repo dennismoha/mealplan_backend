@@ -4,6 +4,8 @@ const { createBullBoard } = require("@bull-board/api");
 const { BullAdapter } = require("@bull-board/api/bullAdapter");
 
 const { ExpressAdapter } = require("@bull-board/express");
+const config = require("#mealplan/config.js");
+
 
 let serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath("/queues");
