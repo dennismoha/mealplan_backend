@@ -28,7 +28,7 @@ class BaseCache {
 
   #cacheError() {
     this.client.on("error", (error) => {
-      console.log("redis error is ,", error);
+      console.log("redis error is ,",  error);
     });
   }
 }

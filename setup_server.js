@@ -121,15 +121,15 @@ class MealPlanServer {
     app.use("/user/token", refreshTokenRouter);
 
     // Meal-related routes
-    app.use(`${baseUrl}/meal/types`, mealTypeRouter);
+    app.use(`/${baseUrl}/meal/types`, mealTypeRouter);
     app.use(`/${config.BASE_URL}/meal/meal-plan`, mealPlanRouter);
-    app.use(`${baseUrl}/meal/meals`, mealsRouter);
-    app.use(`${baseUrl}/meal/type`, mealTypeRouter); // Corrected from mealmealType to mealType
+    app.use(`/${baseUrl}/meal/meals`, mealsRouter);
+    app.use(`/${baseUrl}/meal/type`, mealTypeRouter); // Corrected from mealmealType to mealType
     app.use(`/${baseUrl}/meal/meal-plan/time-intervals`, mealplanTimeRoutes);
 
     // Food-related routes
-    app.use(`${baseUrl}/food/fooditems`, foodItemRoutes);
-    app.use(`${baseUrl}/food/variation`, foodVariationRoutes);
+    app.use(`/${baseUrl}/food/fooditems`, foodItemRoutes);
+    app.use(`/${baseUrl}/food/variation`, foodVariationRoutes);
     app.use(`/${config.BASE_URL}/food/category`, foodCategoryRouter);
 
     // Health route
