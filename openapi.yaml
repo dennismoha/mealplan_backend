@@ -108,8 +108,73 @@ paths:
 
         "500":
           description: server error
+  /meal/meal-plan/time-intervals/{id}:
+    put:
+      tags:
+        - meal plan time interval
+      summary: This endpoint will enable updating of a new meal-plan interval item
+      description: Mealplan interval can only be unique. You cannot update to a name that arleady exists
+      operationId: update mealplan time interval
+      parameters:
+        -  name: id
+           in : path
+           description: unique meal plan id
+           required: true
+           schema:
+              type: string
+      requestBody:
+        description: update a new mealplan tiem interval.  
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/New-Meal-Plan-time-interval"
+        required: true
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                      statusCode: 
+                        type: string
+                        example:  '201'
+                      data:
+                        type: array
+                        items: {}
+                        example: []
+                        description: an empty data object is returned
+                      status:
+                        type: string
+                        example: succesfully updated
+        "400":
+            description: Bad request.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:                  
+                  MealPlanResourceBodyMissingFields:
+                    value:
+                      errors:
+                        name: badRequest
+                        message: "Bad request. The request body is missing required fields or contains invalid data"
+        "409":
+            description: That mealplan time interval arleady exists
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:
+                  MealPlanonflict:
+                    value:
+                      errors:
+                        name: conflictError
+                        message: "Meal plan time with the same name already exists"
 
-
+        "500":
+          description: server error
   /meal/meal-plan/all:
     get:
       tags:
