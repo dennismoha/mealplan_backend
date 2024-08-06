@@ -114,6 +114,66 @@ paths:
                             evening_break: cocoa
                             morning_break: loaf coffee
 
+  
+  /meal/meal-plan/new:
+    post:
+      tags:
+        - meal-plan
+      summary: This endpoint will enable adding of a new meal-plan item
+      description: A new meal plan item will be added for a certain mealplan time interval. but if that mealplan time interval arleady has that day then a conflictError will be returned
+      operationId: add new mealplan
+      requestBody:
+        description: Add a new mealplan.  mealplan key is the mealplan time interval. On the UI this will be autopicked
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddNewMealPlan"
+        required: true
+      responses:
+        "201":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                      statusCode: 
+                        type: string
+                        example:  '201'
+                      data:
+                        type: array
+                        items: {}
+                        example: []
+                        description: an empty data object is returned
+                      status:
+                        type: string
+                        example: succesfully created a new meal Plan
+        "400":
+            description: Bad request.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:                  
+                  MealPlanResourceBodyMissingFields:
+                    value:
+                      errors:
+                        name: badRequest
+                        message: "Bad request. The request body is missing required fields or contains invalid data"
+        "409":
+            description: That day you are trying to create a mealplan for exists in that mealplan interval
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:
+                  MealPlanonflict:
+                    value:
+                      errors:
+                        name: conflictError
+                        message: "Mealplan has got all days"
+
+
   # food category
   /food/category/:
     get:
@@ -186,7 +246,7 @@ paths:
                         name: conflictError
                         message: "Food category already exists"
         "400":
-            description: The request body is missing required fields
+            description: Bad request. 
             content:
               application/json:
                 schema:
@@ -196,7 +256,7 @@ paths:
                     value:
                       errors:
                         name: badRequest
-                        message: "description cannot be empty"
+                        message: "Bad request. The request body is missing required fields or contains invalid data"
 
 
   # /meal/meal-plan/{mealplankey}/{day}:
@@ -251,6 +311,38 @@ components:
           type: string
         mealplan_key:
           type: string
+
+    AddNewMealPlan:
+      type: object
+      properties:
+        day_of_week:
+          type: string
+          description: This is the day of the week
+          example: Monday
+        breakfast:
+          type: string
+          description: This is the first meal of the morning
+          example: tea and bread
+        morning_break:
+          type: string
+          description: this is the meal taken at 10:00 am 
+          example: cocoa
+        Lunch:
+          type: string
+          description: this is the meal taken at 1:00 am 
+          example: rice and beans
+        evening_break:
+          type: string
+          description: this is the meal taken at 4:00 pm 
+          example: porridge
+        supper:
+          type: string
+          description: this is the meal taken at night 
+          example: Githeri
+        mealplan_key:
+          type: string
+          description: this is the mealplan time interval this meal is tagged with. It should be created before a mealplan is created
+          example: week1
 
     FoodCategory:
       type: object
@@ -339,3 +431,4 @@ components:
                     type: string
                   message:
                     type: string
+

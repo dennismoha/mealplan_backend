@@ -6,7 +6,7 @@ const { mealPlanRedis } = require('../../globals/services/redis/meal_plan');
 const ConflictError = require('../../middlewares/custom_errors/conflict_error');
 const IndexQuery = require('../query_utiltity/index');
 const { StatusCodes } = require('http-status-codes');
-
+const { getSuccessMessage } = require('#mealplan/middlewares/custom_success/sucess_message.js');
 
 
 // fetch all the mealplans.
@@ -35,11 +35,11 @@ exports.createANewMealPlan = async (req, res) => {
   // save meal plan to db
   await mealPlanDB.addMealPlanToDB(req.body);
   let meals = await mealPlanDB.fetchMealPlansFromDb();
-  // console.log('meals upon creating is ', meals);
-  console.log('req. body is ', req.body);
+ 
   await mealPlanRedis.saveMealPlanToCache(meals);
 
-  return res.status(StatusCodes.OK).json({ message: 'succesfully created a new meal Plan' });
+  return res.status(StatusCodes.CREATED).send(getSuccessMessage(201,[], 'succesfully created a new meal Plan' ))
+ 
 };
 
 //  update meal plans
