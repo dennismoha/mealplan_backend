@@ -11,12 +11,13 @@ const indexQuery = new IndexQuery();
 
 exports.getAllMealplanTimes = async (req, res) => {
   const sql = "SELECT * FROM mealplantime";
-  try {
+ 
     const mealplanTimes = await indexQuery.getAll(sql);
-    res.json(mealplanTimes);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+    res
+    .status(StatusCodes.OK)
+    .send(getSuccessMessage(200, mealplanTimes, "succesfully updated"));
+    //res.json(mealplanTimes);
+  
 };
 
 exports.getMealplanTime = async (req, res) => {

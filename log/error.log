@@ -151,3 +151,5 @@
 {"level":"error","message":"error returning food","service":"winston service","timestamp":"2024-08-07 00:40:44"}
 {"level":"error","message":"error returning food","service":"winston service","timestamp":"2024-08-07 00:41:07"}
 {"level":"error","message":"error returning food","service":"winston service","timestamp":"2024-08-07 00:41:30"}
+{"level":"error","message":"error returning food","service":"winston service","timestamp":"2024-08-07 00:45:45"}
+{"level":"error","message":"error returning food","service":"winston service","timestamp":"2024-08-07 00:46:10"}
