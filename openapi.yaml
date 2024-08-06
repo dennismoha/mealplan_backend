@@ -175,6 +175,54 @@ paths:
 
         "500":
           description: server error
+ 
+    delete:
+      tags:
+        - meal plan time interval
+      summary: This endpoint will enable deleting a meal-plan interval item
+      description: Delete single meaplan time interval
+      operationId: delete mealplan time interval
+      parameters:
+        -  name: id
+           in : path
+           description: unique meal plan id
+           required: true
+           schema:
+              type: string     
+      responses:
+        "200":
+          description: Deleted successfully
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                      statusCode: 
+                        type: string
+                        example:  '201'
+                      data:
+                        type: array
+                        items: {}
+                        example: []
+                        description: an empty data object is returned
+                      status:
+                        type: string
+                        example: Deleted successfully
+        "400":
+            description: Bad request.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:                  
+                  MealPlanResourceBodyMissingFields:
+                    value:
+                      errors:
+                        name: badRequest
+                        message: "Bad request. The request params is missing id or something else went wrong"   
+
+        "500":
+          description: server error
   /meal/meal-plan/all:
     get:
       tags:
