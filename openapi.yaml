@@ -48,8 +48,67 @@ paths:
                       type: string
                       format: date-time
                       example: "2023-11-23T14:45:33.000Z"
+
+    post:
+      tags:
+        - meal plan time interval
+      summary: This endpoint will enable adding of a new meal-plan interval item
+      description: Each meal plan interval will contain a meal plan which is 7 days of the week. Deleting this will delete the whole meal plan
+      operationId: add new mealplan time interval
+      requestBody:
+        description: Add a new mealplan tiem interval.  In The UI, You will create this first before adding a meal plan. each meal plan will belong to a mealplan interval
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/New-Meal-Plan-time-interval"
+        required: true
+      responses:
+        "201":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                      statusCode: 
+                        type: string
+                        example:  '201'
+                      data:
+                        type: array
+                        items: {}
+                        example: []
+                        description: an empty data object is returned
+                      status:
+                        type: string
+                        example: succesfully created a new meal Plan time interval
+        "400":
+            description: Bad request.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:                  
+                  MealPlanResourceBodyMissingFields:
+                    value:
+                      errors:
+                        name: badRequest
+                        message: "Bad request. The request body is missing required fields or contains invalid data"
+        "409":
+            description: That mealplan time interval arleady exists
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:
+                  MealPlanonflict:
+                    value:
+                      errors:
+                        name: conflictError
+                        message: "Mealplan time interval arleady exists "
+
         "500":
           description: server error
+
 
   /meal/meal-plan/all:
     get:
@@ -294,6 +353,13 @@ components:
           type: string
           format: date-time
           example: "2023-11-23T14:45:33.000Z"
+    New-Meal-Plan-time-interval:
+      type: object
+      properties:        
+        mealPlanName:
+          type: string
+          example: "september week 1"
+        
     updateMealPlan:
       type: object
       properties:

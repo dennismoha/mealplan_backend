@@ -1,7 +1,9 @@
 // mealplantimeController.js
 
-const IndexQuery = require('#mealplan/globals/services/db/db_query_utilities.js')
-
+const IndexQuery = require('#mealplan/globals/services/db/db_query_utilities.js');
+const conflictError = require('#mealplan/middlewares/custom_errors/conflict_error.js');
+const { getSuccessMessage } = require('#mealplan/middlewares/custom_success/sucess_message.js');
+const { StatusCodes } = require('http-status-codes');
 
 const indexQuery = new IndexQuery();
 
@@ -40,17 +42,16 @@ exports.createMealplanTime = async (req, res) => {
 
   console.log('existing meal plan is ', existingMealplan);
   if (existingMealplan.length !== 0) {
-    return res.status(400).json({ message: 'Meal plan with the same name already exists' });
+    throw new conflictError('Meal plan with the same name already exists');
+    //return res.status(400).json({ message: 'Meal plan with the same name already exists' });
   }
 
   const insertMealplanSql = 'INSERT INTO mealplantime (meal_plan_name) VALUES (?)';
 
-  try {
+  
     await indexQuery.insertNewRecord(insertMealplanSql, [mealPlanName]);
-    res.status(201).json({ message: 'successfully created' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+    res.status(StatusCodes.CREATED).send(getSuccessMessage(201,[], 'succesfully created a new meal Plan time interval resource' ));
+  
 };
 
 exports.updateMealplanTime = async (req, res) => {
