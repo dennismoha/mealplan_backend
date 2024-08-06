@@ -25,29 +25,39 @@ paths:
       operationId: return a list of meal plans
       parameters: []
       responses:
-        "200":
-          description: successful operation
+        '200':
+          description: Successfully retrieved meal plans
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    idmealPlanWeek:
-                      type: integer
-                      example: 1
-                    meal_plan_name:
-                      type: string
-                      example: "september week 1"
-                    created_on:
-                      type: string
-                      format: date-time
-                      example: "2023-11-23T14:45:33.000Z"
-                    updated_at:
-                      type: string
-                      format: date-time
-                      example: "2023-11-23T14:45:33.000Z"
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 200
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        idmealPlanWeek:
+                          type: integer
+                          example: 1
+                        meal_plan_name:
+                          type: string
+                          example: september week 1
+                        created_on:
+                          type: string
+                          format: date-time
+                          nullable: true
+                          example: null
+                        updated_at:
+                          type: string
+                          format: date-time
+                          example: 2023-11-23T14:45:33.000Z
+                  status:
+                    type: string
+                    example: "successfully updated"
 
     post:
       tags:
