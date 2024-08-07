@@ -10,6 +10,7 @@ const { categoryRedis } = require('../redis/food_category_redis');
 class FoodCategory {
   async addFoodCategoryToDB(data) {
     const { categoryName, description, imageURL } = data;
+    console.log('adding food category to db')
     
     const insertSql = 'INSERT INTO foodcategory (category_name, description, image_url) VALUES (?, ? ,?)';
 
