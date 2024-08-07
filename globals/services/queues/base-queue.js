@@ -6,6 +6,7 @@ const { BullAdapter } = require("@bull-board/api/bullAdapter");
 const { ExpressAdapter } = require("@bull-board/express");
 const config = require("#mealplan/config.js");
 
+
 let serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath("/queues");
 
@@ -17,17 +18,15 @@ class BaseQueue {
       throw new Error("Cannot instantiate abstract class");
     }
 
+    try {
+      
     if (process.env.NODE_ENV === "development") {
       this.queue = new Queue(queuename, {
         redis: { port: 6379, host: "localhost" },
       });
     } else {
-      this.queue = new Queue(queuename, {
-        redis: {
-          url: config.REDIS_HOST,
-          port: config.REDIS_PORT,
-          password: config.REDIS_PASSWORD,
-        },
+      this.queue = new Queue(queuename, {        
+        redis: { port: config.REDIS_PORT, host: config.REDIS_HOST },
       });
       console.log("Running in production mode");
     }
@@ -61,6 +60,10 @@ class BaseQueue {
     if (this.processJob === undefined) {
       throw new Error("getArea method must be implemented");
     }
+    } catch (error) {
+      console.error('base queue')
+    }
+
   }
 
   addJob(name, data) {
