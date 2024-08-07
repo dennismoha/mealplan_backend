@@ -125,5 +125,4 @@ class MealPlanDB {
   }
 }
 
-const mealPlanDB = new MealPlanDB();
-module.exports = mealPlanDB;
+ module.exports = MealPlanDB;

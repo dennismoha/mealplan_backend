@@ -355,7 +355,109 @@ paths:
                         name: conflictError
                         message: "Mealplan has got all days"
 
+  /meal/meal-plan/update:
+    put:
+      tags:
+        - meal-plan
+      summary: This endpoint will enable updating of a new meal-plan item in the meal plan interval item
+      description: update a meal plan
+      operationId: update mealplan in the meal plan time interval      
+      requestBody:
+        description: update a new mealplan tiem interval.  
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddNewMealPlan"
+        required: true
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                      statusCode: 
+                        type: string
+                        example:  '201'
+                      data:
+                        type: array
+                        items: {}
+                        example: []
+                        description: an empty data object is returned
+                      status:
+                        type: string
+                        example: succesfully updated
+        "400":
+            description: Bad request.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:                  
+                  MealPlanResourceBodyMissingFields:
+                    value:
+                      errors:
+                        name: badRequest
+                        message: "Bad request. The request body is missing required fields or contains invalid data"        
 
+        "500":
+          description: server error
+  
+  /meal/meal-plan/remove/{mealplankey}/{day}:
+     delete:
+      tags:
+        - meal-plan
+      summary: This endpoint will enable deleting a meal-plan day in a mealplan interval item
+      description: Delete single meaplan in a mealplan time interval. eg, delete monday from week1 mealplan
+      operationId: delete mealplan from mealplan time interval
+      parameters:
+        -  name: mealplankey
+           in : path
+           description: unique meal plan id
+           required: true
+           schema:
+              type: string  
+        -  name: day
+           in: path
+           description: mealplan day. Eg monday
+           required: true
+           schemas:
+            type: string   
+      responses:
+        "204":
+          description: Deleted successfully
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                      statusCode: 
+                        type: string
+                        example:  '201'
+                      data:
+                        type: array
+                        items: {}
+                        example: []
+                        description: an empty data object is returned
+                      status:
+                        type: string
+                        example: Deleted successfully
+        "400":
+            description: Bad request.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:                  
+                  MealPlanResourceBodyMissingFields:
+                    value:
+                      errors:
+                        name: badRequest
+                        message: "Bad request. The request params is missing id or something else went wrong"   
+
+        "500":
+          description: server error
   # food category
   /food/category/:
     get:
