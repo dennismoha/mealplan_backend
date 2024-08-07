@@ -21,10 +21,12 @@ class BaseQueue {
     try {
       
     if (process.env.NODE_ENV === "development") {
+      console.log('queue in development')
       this.queue = new Queue(queuename, {
         redis: { port: 6379, host: "localhost" },
       });
     } else {
+      console.log('que in production')
       this.queue = new Queue(queuename, {        
         redis: { port: config.REDIS_PORT, host: config.REDIS_HOST },
       });
