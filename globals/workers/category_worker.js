@@ -2,6 +2,7 @@ const foodCategory = require('../services/db/food_category_db');
 
 class CategoryWorker {
   addCategoryToDb(job, done) {
+    console.log('on production adding category to db')
     try {
       console.log('jobqueue', 'done ');
       foodCategory.addFoodCategoryToDB(job.data);

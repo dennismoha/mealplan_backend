@@ -10,11 +10,12 @@ const _ = require("lodash");
 const { StatusCodes } = require("http-status-codes");
 const ConflictError = require("../../middlewares/custom_errors/conflict_error");
 const foodCategory = require("../../globals/services/db/food_category_db");
-const { CATEGORY_UPDATE, CATEGORY_DELETE } = require("../../constants");
+const { CATEGORY_UPDATE, CATEGORY_DELETE, CATEGORY_ADD_TO_DB } = require("../../constants");
 const databaseError = require("#mealplan/middlewares/custom_errors/database_error.js");
 const {
   getSuccessMessage,
 } = require("#mealplan/middlewares/custom_success/sucess_message.js");
+
 
 const foodCategoryQuery = new FoodCategoryQuery();
 
@@ -65,7 +66,7 @@ exports.createFoodCategory = async (req, res) => {
     throw new ConflictError("Food category already exists");
   }
 
-  categoryQueue.addCategoryJob("addCategoriesToDb", req.body);
+  categoryQueue.addCategoryJob(CATEGORY_ADD_TO_DB, req.body);
   console.log('finished queing categories')
   res.status(StatusCodes.CREATED).send(getSuccessMessage(201, []));
 };

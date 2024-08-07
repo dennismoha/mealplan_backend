@@ -25,10 +25,12 @@ class BaseQueue {
       this.queue = new Queue(queuename, {
         redis: { port: 6379, host: "localhost" },
       });
-    } else {
+    } else if (process.env.NODE_ENV === "production") {
       console.log('que in production')
       this.queue = new Queue(queuename, {        
-        redis: { port: config.REDIS_PORT, host: config.REDIS_HOST },
+        redis: {  url: config.REDIS_HOST,
+          port: config.REDIS_PORT,
+           },
       });
       console.log("Running in production mode");
     }
