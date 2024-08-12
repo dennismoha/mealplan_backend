@@ -18,7 +18,7 @@ const apiStats = require("swagger-stats");
 
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsdoc = require("swagger-jsdoc");
-const YAML = require('yamljs')
+const YAML = require("yamljs");
 const config = require("./config");
 
 const usersRouter = require("./routes/auth/users_auth");
@@ -31,12 +31,12 @@ const mealmealType = require("./routes/meal_mealtype/meal_mealtype");
 const mealplanTimeRoutes = require("./routes/meal_plan_time/meal_plan_time");
 const foodItemRoutes = require("./routes/food_items/food_items");
 const foodVariationRoutes = require("./routes/food_variations/food_variations");
+const foodSubcategoryRoutes = require("./routes/food_sub_category/food_sub_category");
 const errorHandler = require("./middlewares/custom_errors/error-handler");
 const dbHealth = require("./routes/health/health");
 
 const { serverAdapter } = require("./globals/services/queues/base-queue");
-const swaggerDocument = YAML.load("./openapi.yaml")
-
+const swaggerDocument = YAML.load("./openapi.yaml");
 
 class MealPlanServer {
   #app;
@@ -63,9 +63,12 @@ class MealPlanServer {
     );
   }
 
-  #swaggerUISetup(app) {   
-    let baseurl = process.env.NODE_ENV === 'production' ? 'https://mealplan-backend-1gvk.onrender.com/api' : 'http://localhost:3000/api'
-    swaggerDocument.servers = [{url: baseurl}]
+  #swaggerUISetup(app) {
+    let baseurl =
+      process.env.NODE_ENV === "production"
+        ? "https://mealplan-backend-1gvk.onrender.com/api"
+        : "http://localhost:3000/api";
+    swaggerDocument.servers = [{ url: baseurl }];
 
     // Serve Swagger UI
     app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
@@ -112,8 +115,8 @@ class MealPlanServer {
     app.use(expressValidator());
   }
   #routeMiddleware(app) {
-    let baseUrl = config.BASE_URL
-    console.log('url is ', baseUrl)
+    let baseUrl = config.BASE_URL;
+    console.log("url is ", baseUrl);
     // Define routes
     app.use("/queues", serverAdapter.getRouter());
 
@@ -131,6 +134,8 @@ class MealPlanServer {
     app.use(`/${baseUrl}/food/fooditems`, foodItemRoutes);
     app.use(`/${baseUrl}/food/variation`, foodVariationRoutes);
     app.use(`/${config.BASE_URL}/food/category`, foodCategoryRouter);
+    // Use routes
+    app.use(`/${config.BASE_URL}/foodsubcategories`, foodSubcategoryRoutes);
 
     // Health route
     app.use("/health", dbHealth);

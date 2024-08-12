@@ -142,3 +142,44 @@ exports.deleteFoodCategory = async (req, res) => {
 
   res.status(StatusCodes.NO_CONTENT).json({ message: "Deleted food category" });
 };
+
+
+// controllers/foodSubcategoryController.js
+// const { StatusCodes } = require('http-status-codes');
+// const db = require('../db'); // Your database connection module
+
+// exports.getFoodSubcategoryDetails = async (req, res) => {
+//   const sql = `
+//     SELECT
+//       fs.idFoodSubcategory,
+//       fs.subcategory_name,
+//       fs.description AS subcategory_description,
+//       fc.food_categoryID,
+//       fc.category_name AS category_name,
+//       fc.description AS category_description,
+//       fc.image_url AS category_image_url,
+//       i.idimages,
+//       i.image_url AS image_url,
+//       i.image_urlID AS image_urlID
+//     FROM
+//       meal_plan.foodsubcategory fs
+//     JOIN
+//       meal_plan.foodcategory fc ON fs.food_category_id = fc.food_categoryID
+//     LEFT JOIN
+//       meal_plan.images i ON fs.idFoodSubcategory = i.entity_id;
+//   `;
+
+//   try {
+//     const [rows] = await db.query(sql);
+//     res.status(StatusCodes.OK).json({
+//       message: 'Data fetched successfully',
+//       data: rows
+//     });
+//   } catch (err) {
+//     console.error('Database query error:', err);
+//     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+//       message: 'Failed to fetch data',
+//       error: err.message
+//     });
+//   }
+// };
