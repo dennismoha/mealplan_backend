@@ -12,6 +12,8 @@ tags:
     description: contains all foods in the meal plan site
   - name: food-subcategory
     description: subcategory of food
+  - name: food-items
+    description: this handles all food items under each sub category
 # servers:
 #   - url: http://localhost:3000/api
 #     description: This is the server for localhost.
@@ -787,6 +789,222 @@ paths:
                   error:
                     type: string
                     example: "Subcategory not found"
+  
+  /food/fooditems:
+    post:
+      tags:
+        - food-items
+      summary: Create a new food item
+      requestBody:
+        description: Food item data
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                food_name:
+                  type: string
+                  example: "Pizza"
+      responses:
+        '201':
+          description: Food item created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Added food item"
+        '409':
+          description: Conflict - food item already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Food resource exists"
+  
+    get:
+      tags:
+        - food-items
+      summary: Retrieve all food items
+      description: Fetches all food items. The endpoint first tries to get the items from the cache and, if not found, fetches from the database.
+      responses:
+        '200':
+          description: List of all food items successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "123e4567-e89b-12d3-a456-426614174000"
+                        food_name:
+                          type: string
+                          example: "Pizza"
+                        category_id:
+                          type: integer
+                          example: 1
+                required:
+                  - status
+                  - data
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "An error occurred while fetching the food items"
+  /food/fooditems/{id}:
+    get:
+      tags:
+        - food-items
+      summary: Get a specific food item by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the food item
+      responses:
+        '200':
+          description: A single food item
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Food item"
+                  foodItem:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "123e4567-e89b-12d3-a456-426614174000"
+                      food_name:
+                        type: string
+                        example: "Pizza"
+                      category_id:
+                        type: integer
+                        example: 1
+        '404':
+          description: Food item not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Food item not found"
+    put:
+      tags:
+        - food-items
+      summary: Update a food item by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the food item to update
+      requestBody:
+        description: Updated food item data
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                food_name:
+                  type: string
+                  example: "Pizza"
+                category_id:
+                  type: integer
+                  example: 1
+      responses:
+        '200':
+          description: Food item updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Food item updated successfully"
+        '404':
+          description: Food item not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Food item not found"
+        '409':
+          description: Conflict - food item already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Food resource exists"
+    delete:
+      tags:
+        - food-items
+      summary: Delete a food item by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the food item to delete
+      responses:
+        '200':
+          description: Food item deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Food item deleted successfully"
+        '404':
+          description: Food item not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Food item not found"
+ 
   # /meal/meal-plan/{mealplankey}/{day}:
   #   put:
   #     tags:
@@ -967,6 +1185,19 @@ components:
           type: string
         food_category_id:
           type: integer
+
+    FoodItem:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        food_name:
+          type: string
+          example: "Pizza"
+        category_id:
+          type: integer
+          example: 1
 
     Error:
             type: object

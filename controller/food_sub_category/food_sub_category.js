@@ -1,9 +1,7 @@
-// controllers/foodSubcategoryController.js
 const { StatusCodes } = require('http-status-codes');
 const {
     getSuccessMessage,
   } = require("#mealplan/middlewares/custom_success/sucess_message.js");
-//const IndexQuery = require('#mealplan/globals/services/db/db_query_utilities.js');
 
 const IndexQuery = require("#mealplan/globals/services/db/db_query_utilities.js");
 const conflictError = require('#mealplan/middlewares/custom_errors/conflict_error.js');
