@@ -6,6 +6,7 @@ const foodCategoryController = require('../../controller/food_category/food_cate
 const router = express.Router();
 
 router.get('/', foodCategoryController.getAllFoodCategories);
+router.get('/subcategories', foodCategoryController.getFoodSubcategoryDetails);
 // router.get('/:id', foodCategoryController.getFoodCategory);
 router.get('/:id', foodCategoryController.getSingleCategory);
 router.post('/', validateFoodCategory, foodCategoryController.createFoodCategory);

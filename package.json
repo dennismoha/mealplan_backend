@@ -2,9 +2,12 @@
   "name": "meal-plan",
   "version": "0.0.0",
   "private": true,
+  "imports": {
+    "#mealplan/*.js": "./*.js"
+  },
   "scripts": {
-    "start": "NODE_ENV=production pm2 start process.json -i max ",
-    "start-dev":"nodemon app.js",
+    "start": "NODE_ENV=production node app.js ",
+    "start-dev": "NODE_ENV=development nodemon app.js",
     "lint:check": "eslint \"./**/*.js\" ",
     "lint:fix": "eslint \"./**/*.js\" --fix ",
     "prettier:check": "prettier --check \"./**/*.js\" ",
@@ -17,6 +20,7 @@
     "@sendgrid/mail": "^7.7.0",
     "bcrypt": "^5.1.1",
     "bull": "^4.12.2",
+    "cloudinary": "^2.4.0",
     "compression": "^1.7.4",
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",
@@ -25,6 +29,7 @@
     "ejs": "~2.6.1",
     "express": "~4.16.1",
     "express-async-errors": "^3.1.1",
+    "express-mysql-session": "^3.0.2",
     "express-session": "^1.17.3",
     "express-validator": "^5.3.1",
     "helmet": "^7.1.0",
@@ -34,10 +39,14 @@
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "mysql2": "^3.6.1",
+    "pm2": "^5.4.1",
     "redis": "^4.6.13",
+    "swagger-jsdoc": "^6.0.0",
     "swagger-stats": "^0.99.7",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^9.0.1",
-    "winston": "^3.11.0"
+    "winston": "^3.11.0",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "eslint": "^8.50.0",

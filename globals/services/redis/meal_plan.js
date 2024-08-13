@@ -112,7 +112,7 @@ class MealPlanRedis extends BaseCache {
 
       // const mealplan = await multi.exec();
       console.log('mealplan in update is ::: ', mealplan);
-      return JSON.parse(mealplan);
+      return {message: 'susccess'}
     } catch (error) {
       console.error('Error connecting to Redis:', error);
       throw new DatabaseError('Something went wrong while updating meal plan in cache');

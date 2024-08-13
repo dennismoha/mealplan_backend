@@ -1,15 +1,17 @@
 /* eslint-disable camelcase */
-//const FoodCategoryQuery = require('../../../../controller/query_utiltity/index');
-const FoodCategoryQuery = require('./db_query_utilities');
-const { categoryRedis } = require('../redis/food_category_redis');
-const Query = require('./db_query_utilities');
-const query = new Query();
+
+const FoodCategoryQuery = require('#mealplan/globals/services/db/db_query_utilities.js')
 const foodCategoryQuery = new FoodCategoryQuery();
+const { categoryRedis } = require('../redis/food_category_redis');
+
+
+
 
 class FoodCategory {
   async addFoodCategoryToDB(data) {
     const { categoryName, description, imageURL } = data;
-
+    console.log('adding food category to db')
+    
     const insertSql = 'INSERT INTO foodcategory (category_name, description, image_url) VALUES (?, ? ,?)';
 
     const FoodCategoryQuerys = await foodCategoryQuery.insertNewRecord(insertSql, [

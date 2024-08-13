@@ -1,0 +1,34 @@
+components:
+  schemas:
+    Mealplan:
+      type: array
+      items:
+        type: object
+        properties:
+          mealplankey:
+            type: string
+            description: Key identifying the meal plan (e.g., "april-week-1")
+          idmealPlanWeek:
+            type: integer
+            description: ID of the meal plan week
+          data:
+            type: object
+            properties:
+              daysOfWeek:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    lunch:
+                      type: string
+                    supper:
+                      type: string
+                    breakfast:
+                      type: string
+                    evening_break:
+                      type: string
+                    morning_break:
+                      type: string
+                description: Daily meal details
+      # Add any necessary parameters or security definitions here
+    

@@ -1,35 +1,42 @@
-const createError = require('http-errors');
-const express = require('express');
-require('express-async-errors');
-const http = require('http');
+const createError = require("http-errors");
+const express = require("express");
+require("express-async-errors");
+const http = require("http");
 
-const path = require('path');
-const cookieParser = require('cookie-parser');
-const helmet = require('helmet');
-const hpp = require('hpp');
-const session = require('express-session');
+const path = require("path");
+const cookieParser = require("cookie-parser");
+const helmet = require("helmet");
+const hpp = require("hpp");
+const session = require("express-session");
 
-const expressValidator = require('express-validator');
-const verifyJwt = require('./config/auth_token');
-const cors = require('cors');
-const compression = require('compression');
-const { StatusCodes } = require('http-status-codes');
-const apiStats = require('swagger-stats');
+const expressValidator = require("express-validator");
+const verifyJwt = require("./config/auth_token");
+const cors = require("cors");
+const compression = require("compression");
+const { StatusCodes } = require("http-status-codes");
+const apiStats = require("swagger-stats");
 
-const usersRouter = require('./routes/auth/users_auth');
-const refreshTokenRouter = require('./routes/auth/refresh_token');
-const foodCategoryRouter = require('./routes/food_category/food_category_routes');
-const mealTypeRouter = require('./routes/meal_type');
-const mealPlanRouter = require('./routes/meal_plan/meal_plan');
-const meals = require('./routes/meals/meals');
-const mealmealType = require('./routes/meal_mealtype/meal_mealtype');
-const mealplanTimeRoutes = require('./routes/meal_plan_time/meal_plan_time');
-const foodItemRoutes = require('./routes/food_items/food_items');
-const foodVariationRoutes = require('./routes/food_variations/food_variations');
-const errorHandler = require('./middlewares/custom_errors/error-handler');
-const dbHealth = require('./routes/health/health');
+const swaggerUi = require("swagger-ui-express");
+const swaggerJsdoc = require("swagger-jsdoc");
+const YAML = require("yamljs");
+const config = require("./config");
 
-const { serverAdapter } = require('./globals/services/queues/base-queue');
+const usersRouter = require("./routes/auth/users_auth");
+const refreshTokenRouter = require("./routes/auth/refresh_token");
+const foodCategoryRouter = require("./routes/food_category/food_category_routes");
+const mealTypeRouter = require("./routes/meal_type");
+const mealPlanRouter = require("./routes/meal_plan/meal_plan");
+const mealsRouter = require("./routes/meals/meals");
+const mealmealType = require("./routes/meal_mealtype/meal_mealtype");
+const mealplanTimeRoutes = require("./routes/meal_plan_time/meal_plan_time");
+const foodItemRoutes = require("./routes/food_items/food_items");
+const foodVariationRoutes = require("./routes/food_variations/food_variations");
+const foodSubcategoryRoutes = require("./routes/food_sub_category/food_sub_category");
+const errorHandler = require("./middlewares/custom_errors/error-handler");
+const dbHealth = require("./routes/health/health");
+
+const { serverAdapter } = require("./globals/services/queues/base-queue");
+const swaggerDocument = YAML.load("./openapi.yaml");
 
 class MealPlanServer {
   #app;
@@ -41,6 +48,7 @@ class MealPlanServer {
   start() {
     this.#securityMiddleware(this.#app);
     this.#standardMiddleware(this.#app);
+    this.#swaggerUISetup(this.#app);
     this.#routeMiddleware(this.#app);
     this.#apiMonitoring(this.#app);
     this.#globalErrorHandler(this.#app);
@@ -50,16 +58,27 @@ class MealPlanServer {
   #apiMonitoring(app) {
     app.use(
       apiStats.getMiddleware({
-        uriPath: '/api-monitoring'
+        uriPath: "/api-monitoring",
       })
     );
   }
 
+  #swaggerUISetup(app) {
+    let baseurl =
+      process.env.NODE_ENV === "production"
+        ? "https://mealplan-backend-1gvk.onrender.com/api"
+        : "http://localhost:3000/api";
+    swaggerDocument.servers = [{ url: baseurl }];
+
+    // Serve Swagger UI
+    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+  }
+
   #securityMiddleware(app) {
     const corsOptions = {
-      origin: 'http://localhost:5173',
+      origin: "*",
       credentials: true, //access-control-allow-credentials:true
-      optionSuccessStatus: 200
+      optionSuccessStatus: 200,
     };
     app.use(helmet());
     app.use(cors(corsOptions));
@@ -68,13 +87,13 @@ class MealPlanServer {
     app.use(hpp({ checkQuery: false, checkBody: false }));
     // remember to migrate the secrete to .env
 
-    app.use(cookieParser('chelsea', { signed: true }));
+    app.use(cookieParser(config.COOKIE_PASSWORD, { signed: true }));
     app.use(
       session({
-        name: 'blue',
-        secret: 'chelsea',
+        name: config.SESSION_NAME,
+        secret: config.COOKIE_PASSWORD,
         resave: false,
-        saveUninitialized: false
+        saveUninitialized: false,
       })
     );
   }
@@ -84,38 +103,51 @@ class MealPlanServer {
         level: 6,
         threshold: 100 * 1000, // threshold on to which no data will be compressed. default is zero in bytes,
         filter: (req, res) => {
-          if (req.headers['x-no-compression']) {
+          if (req.headers["x-no-compression"]) {
             return false;
           }
           return compression.filter(req, res);
-        }
+        },
       })
     );
-    app.use(express.json({ limit: '50mb' }));
-    app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+    app.use(express.json({ limit: "50mb" }));
+    app.use(express.urlencoded({ extended: true, limit: "50mb" }));
     app.use(expressValidator());
   }
   #routeMiddleware(app) {
-    let baseurl = '/api/mealplan';
-    app.use('/queues', serverAdapter.getRouter());
+    let baseUrl = config.BASE_URL;
+    console.log("url is ", baseUrl);
+    // Define routes
+    app.use("/queues", serverAdapter.getRouter());
 
-    app.use('/user', usersRouter);
-    app.use('/user/token', refreshTokenRouter);
+    app.use("/user", usersRouter);
+    app.use("/user/token", refreshTokenRouter);
 
-    app.use('/api/meal/types', mealTypeRouter);
-    app.use(`${baseurl}/plan`, mealPlanRouter);
-    app.use(`${baseurl}/meals`, meals);
-    app.use('/api/meal/meal/type', mealmealType);
-    app.use(`${baseurl}/mealplantimes`, mealplanTimeRoutes);
-    app.use('/api/food/fooditems', foodItemRoutes);
-    app.use('/api/food/variation', foodVariationRoutes);
-    app.use('/health', dbHealth);
+    // Meal-related routes
+    app.use(`/${baseUrl}/meal/types`, mealTypeRouter);
+    app.use(`/${config.BASE_URL}/meal/meal-plan`, mealPlanRouter);
+    app.use(`/${baseUrl}/meal/meals`, mealsRouter);
+    app.use(`/${baseUrl}/meal/type`, mealTypeRouter); // Corrected from mealmealType to mealType
+    app.use(`/${baseUrl}/meal/meal-plan/time-intervals`, mealplanTimeRoutes);
+
+    // Food-related routes
+    app.use(`/${baseUrl}/food/fooditems`, foodItemRoutes);
+    app.use(`/${baseUrl}/food/variation`, foodVariationRoutes);
+    app.use(`/${config.BASE_URL}/food/category`, foodCategoryRouter);
+    // Use routes
+    app.use(`/${config.BASE_URL}/foodsubcategories`, foodSubcategoryRoutes);
+
+    // Health route
+    app.use("/health", dbHealth);
+
     // app.use(verifyJwt); // make sure you add this on top of all the routes that have to use jwt.
-    app.use(`${baseurl}/category`, foodCategoryRouter);
+    //app.use(`${baseUrl}/category`, foodCategoryRouter);
   }
   #globalErrorHandler(app) {
-    app.use('*', (req, res) => {
-      return res.status(StatusCodes.NOT_FOUND).json({ message: `${req.originalUrl} not found` });
+    app.use("*", (req, res) => {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ message: `${req.originalUrl} not found` });
     });
     // error handler
     app.use(errorHandler);
@@ -125,12 +157,12 @@ class MealPlanServer {
       const httpServer = new http.Server(app);
       this.#startHttpServer(httpServer);
     } catch (error) {
-      console.log('server error ', error);
+      console.log("server error ", error);
     }
   }
   #startHttpServer(httpServer) {
-    httpServer.listen(3000, () => {
-      console.log('app is running well');
+    httpServer.listen(config.PORT || 3000, () => {
+      console.log("app is running well");
     });
   }
 }

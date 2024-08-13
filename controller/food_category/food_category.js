@@ -1,29 +1,29 @@
 /* eslint-disable camelcase */
 // foodCategoryController.js
 
-const categoryQueue = require('../../globals/services/queues/category_queue');
-const { categoryRedis } = require('../../globals/services/redis/food_category_redis');
-const FoodCategoryQuery = require('../query_utiltity/index');
-const _ = require('lodash');
-const { StatusCodes } = require('http-status-codes');
-const ConflictError = require('../../middlewares/custom_errors/conflict_error');
-const foodCategory = require('../../globals/services/db/food_category_db');
-const { CATEGORY_UPDATE, CATEGORY_DELETE } = require('../../constants');
+const categoryQueue = require("../../globals/services/queues/category_queue");
+const {
+  categoryRedis,
+} = require("../../globals/services/redis/food_category_redis");
+const FoodCategoryQuery = require("../query_utiltity/index");
+const _ = require("lodash");
+const { StatusCodes } = require("http-status-codes");
+const ConflictError = require("../../middlewares/custom_errors/conflict_error");
+const foodCategory = require("../../globals/services/db/food_category_db");
+const { CATEGORY_UPDATE, CATEGORY_DELETE, CATEGORY_ADD_TO_DB } = require("../../constants");
+const databaseError = require("#mealplan/middlewares/custom_errors/database_error.js");
+const {
+  getSuccessMessage,
+} = require("#mealplan/middlewares/custom_success/sucess_message.js");
+
 
 const foodCategoryQuery = new FoodCategoryQuery();
 
 exports.getAllFoodCategories = async (req, res) => {
-  const sql = 'SELECT * FROM foodcategory';
-  // select all from the cache first.
+  const sql = "SELECT * FROM foodcategory";
 
-  // const catgories = await categoryRedis.selectAllCategoriesFromCache();
-  // console.log('categories from cache are ', catgories);
-  try {
-    const foodcategory = await foodCategoryQuery.getAll(sql);
-    res.json(foodcategory);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  const foodcategory = await foodCategoryQuery.getAll(sql);
+  res.status(StatusCodes.OK).send(getSuccessMessage(200, foodcategory));
 };
 
 /*
@@ -47,22 +47,28 @@ exports.getSingleCategory = async (req, res) => {
     await categoryRedis.saveCategoryToCache(id, Category);
   }
   //return directly if there is cache hit
-  res.status(StatusCodes.OK).json({ message: 'success', category: Category });
+  // res.status(StatusCodes.OK).json({ message: 'success', category: Category });
+  res.status(StatusCodes.OK).send(getSuccessMessage(200, Category));
 };
 
 exports.createFoodCategory = async (req, res) => {
   const { categoryName, description, imageURL } = req.body;
-
+  console.log("checking if category exists before saving");
   // Check if the food category already exists
-  const checkIfExistsSql = 'SELECT * FROM foodcategory WHERE category_name = ?';
-  const existingFoodCategory = await foodCategoryQuery.checkIfRecordExists(checkIfExistsSql, [categoryName]);
+  const checkIfExistsSql = "SELECT * FROM foodcategory WHERE category_name = ?";
+  const existingFoodCategory = await foodCategoryQuery.checkIfRecordExists(
+    checkIfExistsSql,
+    [categoryName]
+  );
 
+  console.log("existing food category is ", existingFoodCategory);
   if (existingFoodCategory.length !== 0) {
-    throw new ConflictError('Food category already exists');
+    throw new ConflictError("Food category already exists");
   }
 
-  categoryQueue.addCategoryJob('addCategoriesToDb', req.body);
-  res.status(StatusCodes.OK).json({ message: 'category added successfully' });
+  categoryQueue.addCategoryJob(CATEGORY_ADD_TO_DB, req.body);
+  console.log('finished queing categories')
+  res.status(StatusCodes.CREATED).send(getSuccessMessage(201, []));
 };
 
 exports.updateFoodCategory = async (req, res) => {
@@ -70,11 +76,17 @@ exports.updateFoodCategory = async (req, res) => {
   let id = req.params.id;
   let Category;
   // Check if the updated food category name already exists
-  const checkIfExistsSql = 'SELECT * FROM foodcategory WHERE category_name = ? AND food_categoryID != ?';
-  const existingFoodCategory = await foodCategoryQuery.checkIfRecordExists(checkIfExistsSql, [categoryName, id]);
+  const checkIfExistsSql =
+    "SELECT * FROM foodcategory WHERE category_name = ? AND food_categoryID != ?";
+  const existingFoodCategory = await foodCategoryQuery.checkIfRecordExists(
+    checkIfExistsSql,
+    [categoryName, id]
+  );
 
   if (existingFoodCategory.length !== 0) {
-    return res.status(StatusCodes.CONFLICT).json({ message: 'Food category already exists' });
+    return res
+      .status(StatusCodes.CONFLICT)
+      .json({ message: "Food category already exists" });
   }
 
   /*
@@ -85,12 +97,18 @@ exports.updateFoodCategory = async (req, res) => {
   await foodCategory.updateCategoryInDB({ id, data: req.body });
 
   // check if category exists on cache to update it
-  let numberOfCategoriesInSet = await categoryRedis.checkIfCategoryExistsOnCache(id);
+  let numberOfCategoriesInSet =
+    await categoryRedis.checkIfCategoryExistsOnCache(id);
 
   if (!numberOfCategoriesInSet) {
     // we return and not cache since it's not arleady cached
     Category = await foodCategory.fetchSingleCategoryFromDb(id);
-    return res.status(StatusCodes.OK).json({ message: 'succesfully updated the food category detaisl', Category });
+    return res
+      .status(StatusCodes.OK)
+      .json({
+        message: "succesfully updated the food category detaisl",
+        Category,
+      });
   }
 
   // if it exists we  update the cache
@@ -98,7 +116,12 @@ exports.updateFoodCategory = async (req, res) => {
 
   await categoryRedis.saveCategoryToCache(id, Category);
 
-  res.status(StatusCodes.OK).json({ message: 'succesfully updated the food category detaisl', Category });
+  res
+    .status(StatusCodes.OK)
+    .json({
+      message: "succesfully updated the food category detaisl",
+      Category,
+    });
 };
 
 exports.deleteFoodCategory = async (req, res) => {
@@ -107,7 +130,8 @@ exports.deleteFoodCategory = async (req, res) => {
   // first check if it's cached
 
   // check if category exists on cache to update it
-  let numberOfCategoriesInSet = await categoryRedis.checkIfCategoryExistsOnCache(id);
+  let numberOfCategoriesInSet =
+    await categoryRedis.checkIfCategoryExistsOnCache(id);
 
   if (numberOfCategoriesInSet) {
     // we remove it since it's cached
@@ -116,5 +140,46 @@ exports.deleteFoodCategory = async (req, res) => {
 
   await categoryQueue.addCategoryJob(CATEGORY_DELETE, { id });
 
-  res.status(StatusCodes.NO_CONTENT).json({ message: 'Deleted food category' });
+  res.status(StatusCodes.NO_CONTENT).json({ message: "Deleted food category" });
+};
+
+
+// controllers/foodSubcategoryController.js
+// const { StatusCodes } = require('http-status-codes');
+// const db = require('../db'); // Your database connection module
+
+exports.getFoodSubcategoryDetails = async (req, res) => {
+  const sql = `
+    SELECT
+      fs.idFoodSubcategory,
+      fs.subcategory_name,
+      fs.description AS subcategory_description,
+      fc.food_categoryID,
+      fc.category_name AS category_name,
+      fc.description AS category_description,
+      fc.image_url AS category_image_url,
+      i.idimages,
+      i.image_url AS image_url,
+      i.image_urlID AS image_urlID
+    FROM
+      meal_plan.foodsubcategory fs
+    JOIN
+      meal_plan.foodcategory fc ON fs.food_category_id = fc.food_categoryID
+    LEFT JOIN
+      meal_plan.images i ON fs.idFoodSubcategory = i.entity_id;
+  `;
+
+  try {
+    const [rows] = await foodCategoryQuery.getAll(sql);
+    res.status(StatusCodes.OK).json({
+      message: 'Data fetched successfully',
+      data: rows
+    });
+  } catch (err) {
+    console.error('Database query error:', err);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: 'Failed to fetch data',
+      error: err.message
+    });
+  }
 };

@@ -55,7 +55,7 @@ class Application {
       .then(() => {
         process.exit(exitCode);
       })
-      .catcj((error) => {
+      .catch((error) => {
         console.log('error shutting down ', error);
         process.exit(1);
       });

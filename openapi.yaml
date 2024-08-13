@@ -1,0 +1,1212 @@
+openapi: 3.0.0
+info:
+  title: meal plan api
+  description: This is a API documentation for the mealplan app
+  version: 1.0.0
+tags:
+  - name: meal-plan
+    description: mealplan
+  - name: meal plan time interval
+    description: Time interval for each meal plan. The name can be a unique string chosen by the user or days of the week, months etc
+  - name: food category
+    description: contains all foods in the meal plan site
+  - name: food-subcategory
+    description: subcategory of food
+  - name: food-items
+    description: this handles all food items under each sub category
+# servers:
+#   - url: http://localhost:3000/api
+#     description: This is the server for localhost.
+#   - url: https://mealplan-backend-1gvk.onrender.com/api
+#     description: this is the production server
+paths:
+  /meal/meal-plan/time-intervals/:
+    get:
+      tags:
+        - meal plan time interval
+      summary: This endpoint returns all time intervals contained in the db
+      description: These time intervals are intervals of each specific meal plan. Each specific meal-plan is made for 7 days in a week. The interval can be any specific unique name chosen by the user
+      operationId: return a list of meal plans
+      parameters: []
+      responses:
+        '200':
+          description: Successfully retrieved meal plans
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 200
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        idmealPlanWeek:
+                          type: integer
+                          example: 1
+                        meal_plan_name:
+                          type: string
+                          example: september week 1
+                        created_on:
+                          type: string
+                          format: date-time
+                          nullable: true
+                          example: null
+                        updated_at:
+                          type: string
+                          format: date-time
+                          example: 2023-11-23T14:45:33.000Z
+                  status:
+                    type: string
+                    example: "successfully updated"
+
+    post:
+      tags:
+        - meal plan time interval
+      summary: This endpoint will enable adding of a new meal-plan interval item
+      description: Each meal plan interval will contain a meal plan which is 7 days of the week. Deleting this will delete the whole meal plan
+      operationId: add new mealplan time interval
+      requestBody:
+        description: Add a new mealplan tiem interval.  In The UI, You will create this first before adding a meal plan. each meal plan will belong to a mealplan interval
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/New-Meal-Plan-time-interval"
+        required: true
+      responses:
+        "201":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                      statusCode: 
+                        type: string
+                        example:  '201'
+                      data:
+                        type: array
+                        items: {}
+                        example: []
+                        description: an empty data object is returned
+                      status:
+                        type: string
+                        example: succesfully created a new meal Plan time interval
+        "400":
+            description: Bad request.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:                  
+                  MealPlanResourceBodyMissingFields:
+                    value:
+                      errors:
+                        name: badRequest
+                        message: "Bad request. The request body is missing required fields or contains invalid data"
+        "409":
+            description: That mealplan time interval arleady exists
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:
+                  MealPlanonflict:
+                    value:
+                      errors:
+                        name: conflictError
+                        message: "Mealplan time interval arleady exists "
+
+        "500":
+          description: server error
+  /meal/meal-plan/time-intervals/{id}:
+    put:
+      tags:
+        - meal plan time interval
+      summary: This endpoint will enable updating of a new meal-plan interval item
+      description: Mealplan interval can only be unique. You cannot update to a name that arleady exists
+      operationId: update mealplan time interval
+      parameters:
+        -  name: id
+           in : path
+           description: unique meal plan id
+           required: true
+           schema:
+              type: string
+      requestBody:
+        description: update a new mealplan tiem interval.  
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/New-Meal-Plan-time-interval"
+        required: true
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                      statusCode: 
+                        type: string
+                        example:  '201'
+                      data:
+                        type: array
+                        items: {}
+                        example: []
+                        description: an empty data object is returned
+                      status:
+                        type: string
+                        example: succesfully updated
+        "400":
+            description: Bad request.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:                  
+                  MealPlanResourceBodyMissingFields:
+                    value:
+                      errors:
+                        name: badRequest
+                        message: "Bad request. The request body is missing required fields or contains invalid data"
+        "409":
+            description: That mealplan time interval arleady exists
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:
+                  MealPlanonflict:
+                    value:
+                      errors:
+                        name: conflictError
+                        message: "Meal plan time with the same name already exists"
+
+        "500":
+          description: server error
+ 
+    delete:
+      tags:
+        - meal plan time interval
+      summary: This endpoint will enable deleting a meal-plan interval item
+      description: Delete single meaplan time interval
+      operationId: delete mealplan time interval
+      parameters:
+        -  name: id
+           in : path
+           description: unique meal plan id
+           required: true
+           schema:
+              type: string     
+      responses:
+        "200":
+          description: Deleted successfully
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                      statusCode: 
+                        type: string
+                        example:  '201'
+                      data:
+                        type: array
+                        items: {}
+                        example: []
+                        description: an empty data object is returned
+                      status:
+                        type: string
+                        example: Deleted successfully
+        "400":
+            description: Bad request.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:                  
+                  MealPlanResourceBodyMissingFields:
+                    value:
+                      errors:
+                        name: badRequest
+                        message: "Bad request. The request params is missing id or something else went wrong"   
+
+        "500":
+          description: server error
+  /meal/meal-plan/all:
+    get:
+      tags:
+        - meal-plan
+      summary: This is a get request to return a list of all meal plans
+      description: This api returns a list of all meal plans
+      responses:
+        200:
+          description: meal plan get method
+          content:
+            application/json:
+              schema:
+                $ref: "./components/schemas/meal_plan.yaml"
+              examples:
+                meals:
+                  value:
+                    - mealplankey: week2
+                      idmealPlanWeek: 2
+                      data:
+                        daysOfWeek:
+                          Friday:
+                            lunch: Chicken salad
+                            supper: Grilled fish
+                            breakfast: Eggs and toast
+                            evening_break: Yogurt
+                            morning_break: Fruit
+                          Monday:
+                            lunch: Chicken salad
+                            supper: Grilled fish
+                            breakfast: Biscuits
+                            evening_break: Yogurt
+                            morning_break: Fruit
+                          Sunday:
+                            lunch: Chicken salad
+                            supper: Grilled fish
+                            breakfast: Biscuits
+                            evening_break: Yogurt
+                            morning_break: Fruit
+                          Tuesday:
+                            lunch: mukimo
+                            supper: Githeri avocado
+                            breakfast: maji
+                            evening_break: coffee
+                            morning_break: chocolate
+                          Saturday:
+                            lunch: Chicken salad
+                            supper: Grilled fish
+                            breakfast: Eggs and toast
+                            evening_break: Yogurt
+                            morning_break: Fruit
+                          Thursday:
+                            lunch: pizza
+                            supper: fruits and greens
+                            breakfast: cocoa
+                            evening_break: coffee
+                            morning_break: juice cola
+                          Wednesday:
+                            lunch: ugali
+                            supper: minji rice
+                            breakfast: chapo chai
+                            evening_break: cocoa
+                            morning_break: loaf coffee
+
+  
+  /meal/meal-plan/new:
+    post:
+      tags:
+        - meal-plan
+      summary: This endpoint will enable adding of a new meal-plan item
+      description: A new meal plan item will be added for a certain mealplan time interval. but if that mealplan time interval arleady has that day then a conflictError will be returned
+      operationId: add new mealplan
+      requestBody:
+        description: Add a new mealplan.  mealplan key is the mealplan time interval. On the UI this will be autopicked
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddNewMealPlan"
+        required: true
+      responses:
+        "201":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                      statusCode: 
+                        type: string
+                        example:  '201'
+                      data:
+                        type: array
+                        items: {}
+                        example: []
+                        description: an empty data object is returned
+                      status:
+                        type: string
+                        example: succesfully created a new meal Plan
+        "400":
+            description: Bad request.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:                  
+                  MealPlanResourceBodyMissingFields:
+                    value:
+                      errors:
+                        name: badRequest
+                        message: "Bad request. The request body is missing required fields or contains invalid data"
+        "409":
+            description: That day you are trying to create a mealplan for exists in that mealplan interval
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:
+                  MealPlanonflict:
+                    value:
+                      errors:
+                        name: conflictError
+                        message: "Mealplan has got all days"
+
+  /meal/meal-plan/update:
+    put:
+      tags:
+        - meal-plan
+      summary: This endpoint will enable updating of a new meal-plan item in the meal plan interval item
+      description: update a meal plan
+      operationId: update mealplan in the meal plan time interval      
+      requestBody:
+        description: update a new mealplan tiem interval.  
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddNewMealPlan"
+        required: true
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                      statusCode: 
+                        type: string
+                        example:  '201'
+                      data:
+                        type: array
+                        items: {}
+                        example: []
+                        description: an empty data object is returned
+                      status:
+                        type: string
+                        example: succesfully updated
+        "400":
+            description: Bad request.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:                  
+                  MealPlanResourceBodyMissingFields:
+                    value:
+                      errors:
+                        name: badRequest
+                        message: "Bad request. The request body is missing required fields or contains invalid data"        
+
+        "500":
+          description: server error
+  
+  /meal/meal-plan/remove/{mealplankey}/{day}:
+     delete:
+      tags:
+        - meal-plan
+      summary: This endpoint will enable deleting a meal-plan day in a mealplan interval item
+      description: Delete single meaplan in a mealplan time interval. eg, delete monday from week1 mealplan
+      operationId: delete mealplan from mealplan time interval
+      parameters:
+        -  name: mealplankey
+           in : path
+           description: unique meal plan id
+           required: true
+           schema:
+              type: string  
+        -  name: day
+           in: path
+           description: mealplan day. Eg monday
+           required: true
+           schemas:
+            type: string   
+      responses:
+        "204":
+          description: Deleted successfully
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                      statusCode: 
+                        type: string
+                        example:  '201'
+                      data:
+                        type: array
+                        items: {}
+                        example: []
+                        description: an empty data object is returned
+                      status:
+                        type: string
+                        example: Deleted successfully
+        "400":
+            description: Bad request.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:                  
+                  MealPlanResourceBodyMissingFields:
+                    value:
+                      errors:
+                        name: badRequest
+                        message: "Bad request. The request params is missing id or something else went wrong"   
+
+        "500":
+          description: server error
+  # food category
+  /food/category/:
+    get:
+      tags:
+        - food category
+      summary: This endpoint will return a list of all categories
+      description: category description
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:                  
+                  oneOf:
+                  - type: array
+                    items:
+                      $ref: "#/components/schemas/FoodCategory"
+                      description: An Array of food categories
+                  - $ref: "#/components/schemas/EmptyResponse"
+                    description: An empty array if no food categories are found.
+
+        "500":
+          description: "something went wrong"
+
+    post:
+      tags:
+        - food category
+      summary: This endpoint will enable adding of a new food category
+      description: Add a new category
+      operationId: add new category
+      requestBody:
+        description: Add a new category
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddNewFoodCategory"
+        required: true
+      responses:
+        "201":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                      statusCode: 
+                        type: string
+                        example:  '201'
+                      data:
+                        type: array
+                        items: {}
+                        example: []
+                        description: an empty data object is returned
+                      status:
+                        type: string
+                        example: success
+
+        "409":
+            description: food category with that name exists
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:
+                  foodCategoryConflict:
+                    value:
+                      errors:
+                        name: conflictError
+                        message: "Food category already exists"
+        "400":
+            description: Bad request. 
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+                examples:                  
+                  foodCategoryResourceBodyMissingFields:
+                    value:
+                      errors:
+                        name: badRequest
+                        message: "Bad request. The request body is missing required fields or contains invalid data"
+
+  /foodsubcategories:
+    get:
+      tags:
+        - food-subcategory
+      summary: Get all food subcategories
+      description: Each category of food will have it's children subcategory. 
+      operationId: fetchallfoodsubcategory
+      responses:
+        '200':
+          description: List of all food subcategories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        foodsubcategory_id:
+                          type: integer
+                          example: 1
+                        subcategory_name:
+                          type: string
+                          example: "Appetizers"
+                        description:
+                          type: string
+                          example: "Starters and small dishes"
+                        food_category_id:
+                          type: integer
+                          example: 10
+                        created_on:
+                          type: date-time
+                          example: 024-08-12T22:01:15.000Z
+                        updated_on: 
+                          type: date-time
+                          example: 024-08-12T22:01:15.000Z
+          '500':
+            description: 'server error'
+    post:
+      tags:
+        - food-subcategory
+      summary: Create a new food subcategory
+      requestBody:
+        description: Food subcategory data
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subcategory_name:
+                  type: string
+                  example: "Appetizers"
+                description:
+                  type: string
+                  example: "Starters and small dishes"
+                food_category_id:
+                  type: integer
+                  example: 'c3794f7f-3e0c-11ef-ba87-f816542ce27d'
+      responses:
+        '201':
+          description: Food subcategory created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 201
+                  data:
+                    type: object
+                    properties:                      
+                      subcategory_name:
+                        type: string
+                        example: "Appetizers"
+                      description:
+                        type: string
+                        example: "Starters and small dishes"
+                      food_category_id:
+                        type: integer
+                        example: 'c3794f7f-3e0c-11ef-ba87-f816542ce27d'
+        '409':
+          description: Conflict - subcategory already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Subcategory exists"
+  /foodsubcategories/{id}:
+    get:
+      tags:
+        - food-subcategory
+      summary: Get a single food subcategory by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the food subcategory
+      responses:
+        '200':
+          description: A single food subcategory
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  data:
+                    type: object
+                    properties:
+                      foodsubcategory_id:
+                        type: integer
+                        example: 1
+                      subcategory_name:
+                        type: string
+                        example: "Appetizers"
+                      description:
+                        type: string
+                        example: "Starters and small dishes"
+                      food_category_id:
+                        type: integer
+                        example: 10
+        '404':
+          description: Subcategory not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Subcategory not found"
+    put:
+      tags:
+        - food-subcategory
+      summary: Update an existing food subcategory
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the food subcategory to update
+      requestBody:
+        description: Updated food subcategory data
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subcategory_name:
+                  type: string
+                  example: "Appetizers"
+                description:
+                  type: string
+                  example: "Starters and small dishes"
+                food_category_id:
+                  type: integer
+                  example: 10
+      responses:
+        '200':
+          description: Food subcategory updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      subcategory_name:
+                        type: string
+                        example: "Appetizers"
+                      description:
+                        type: string
+                        example: "Starters and small dishes"
+                      food_category_id:
+                        type: integer
+                        example: 10
+        '404':
+          description: Subcategory not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Subcategory not found"
+        '409':
+          description: Conflict - subcategory name already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Subcategory name already exists"
+    delete:
+      tags:
+        - food-subcategory
+      summary: Delete a food subcategory
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the food subcategory to delete
+      responses:
+        '204':
+          description: Food subcategory deleted
+        '404':
+          description: Subcategory not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Subcategory not found"
+  
+  /food/fooditems:
+    post:
+      tags:
+        - food-items
+      summary: Create a new food item
+      requestBody:
+        description: Food item data
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                food_name:
+                  type: string
+                  example: "Pizza"
+      responses:
+        '201':
+          description: Food item created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Added food item"
+        '409':
+          description: Conflict - food item already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Food resource exists"
+  
+    get:
+      tags:
+        - food-items
+      summary: Retrieve all food items
+      description: Fetches all food items. The endpoint first tries to get the items from the cache and, if not found, fetches from the database.
+      responses:
+        '200':
+          description: List of all food items successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "123e4567-e89b-12d3-a456-426614174000"
+                        food_name:
+                          type: string
+                          example: "Pizza"
+                        category_id:
+                          type: integer
+                          example: 1
+                required:
+                  - status
+                  - data
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "An error occurred while fetching the food items"
+  /food/fooditems/{id}:
+    get:
+      tags:
+        - food-items
+      summary: Get a specific food item by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the food item
+      responses:
+        '200':
+          description: A single food item
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Food item"
+                  foodItem:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "123e4567-e89b-12d3-a456-426614174000"
+                      food_name:
+                        type: string
+                        example: "Pizza"
+                      category_id:
+                        type: integer
+                        example: 1
+        '404':
+          description: Food item not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Food item not found"
+    put:
+      tags:
+        - food-items
+      summary: Update a food item by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the food item to update
+      requestBody:
+        description: Updated food item data
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                food_name:
+                  type: string
+                  example: "Pizza"
+                category_id:
+                  type: integer
+                  example: 1
+      responses:
+        '200':
+          description: Food item updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Food item updated successfully"
+        '404':
+          description: Food item not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Food item not found"
+        '409':
+          description: Conflict - food item already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Food resource exists"
+    delete:
+      tags:
+        - food-items
+      summary: Delete a food item by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the food item to delete
+      responses:
+        '200':
+          description: Food item deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Food item deleted successfully"
+        '404':
+          description: Food item not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Food item not found"
+ 
+  # /meal/meal-plan/{mealplankey}/{day}:
+  #   put:
+  #     tags:
+  #       - meal plan
+  #     summary: This endpoint updates a single mealplan row
+  #     description: This endpoint updates a single mealplan row. Eg if you want to update a meal on a single day of the week. Meal plan key is what makes
+  #     requestBody:
+  #       description: The request body will contain of all meals for that specific day
+  #       required: true
+  #       content:
+  #         application/json:
+  #           schema:
+  #             $ref: '#/components/schemas/updateMealPlan'
+  #     responses:
+  #         200:
+
+components:
+  schemas:
+    Meal-Plan-time-interval:
+      type: object
+      properties:
+        idmealPlanWeek:
+          type: integer
+          example: 1
+        meal_plan_name:
+          type: string
+          example: "september week 1"
+        created_on:
+          type: string
+          format: date-time
+          example: null
+        updated_at:
+          type: string
+          format: date-time
+          example: "2023-11-23T14:45:33.000Z"
+    New-Meal-Plan-time-interval:
+      type: object
+      properties:        
+        mealPlanName:
+          type: string
+          example: "september week 1"
+        
+    updateMealPlan:
+      type: object
+      properties:
+        day_of_week:
+          type: string
+        breakfast:
+          type: string
+        morning_break:
+          type: string
+        lunch:
+          type: string
+        evening_break:
+          type: string
+        supper:
+          type: string
+        mealplan_key:
+          type: string
+
+    AddNewMealPlan:
+      type: object
+      properties:
+        day_of_week:
+          type: string
+          description: This is the day of the week
+          example: Monday
+        breakfast:
+          type: string
+          description: This is the first meal of the morning
+          example: tea and bread
+        morning_break:
+          type: string
+          description: this is the meal taken at 10:00 am 
+          example: cocoa
+        Lunch:
+          type: string
+          description: this is the meal taken at 1:00 am 
+          example: rice and beans
+        evening_break:
+          type: string
+          description: this is the meal taken at 4:00 pm 
+          example: porridge
+        supper:
+          type: string
+          description: this is the meal taken at night 
+          example: Githeri
+        mealplan_key:
+          type: string
+          description: this is the mealplan time interval this meal is tagged with. It should be created before a mealplan is created
+          example: week1
+
+    FoodCategory:
+      type: object
+      properties:
+        statusCode: 
+          type: string
+          description: status code by default 200
+          example: 200
+        data:
+          type: object
+          properties:
+            idFoodCategory:
+              type: integer
+              description: The unique identifier for the food category.
+              example: 2
+            category_name:
+              type: string
+              description: The name of the food category.
+              example: veges
+            description:
+              type: string
+              description: Description of the food category.
+              example: this is the fruits category
+            image_url:
+              type: string
+              format: uri
+              description: URL to the image of the food category.
+              example: http://wwww.com
+            food_categoryID:
+              type: string
+              description: The UUID of the food category.
+              example: dac91541-f25a-11ee-8de4-f816542ce27d
+            created_on:
+              type: string
+              format: date-time
+              description: Date and time when the food category was created.
+              example: "2024-04-04T08:10:52.000Z"
+            updated_on:
+              type: string
+              format: date-time
+              description: Date and time when the food category was last updated.
+              example: "2024-04-04T08:10:52.000Z"
+        status:
+          type: string
+          description: success status code
+          example: success
+      required:
+        - idFoodCategory
+        - category_name
+        - description
+        - image_url
+        - food_categoryID
+        - created_on
+        - updated_on
+
+    EmptyResponse:
+      type: array
+      items: {}
+      example: []
+      description: An empty array indicating no objects in array
+
+
+    AddNewFoodCategory:
+      type: object
+      properties:
+        categoryName:
+          type: string
+          description: This is the name of the category
+          example: fruits
+        description:
+          type: string
+          description: This is the description of the category
+          example: fruits are vey rich in vitamin D
+        imageURL:
+          type: string
+          description: this is a url string for the image that contains a category
+          example: https://www.orange.com/orange.jpeg
+
+    FoodSubcategory:
+      type: object
+      properties:
+        foodsubcategory_id:
+          type: integer
+        subcategory_name:
+          type: string
+        description:
+          type: string
+        food_category_id:
+          type: integer
+
+    FoodItem:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        food_name:
+          type: string
+          example: "Pizza"
+        category_id:
+          type: integer
+          example: 1
+
+    Error:
+            type: object
+            properties:
+              errors:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  message:
+                    type: string
+

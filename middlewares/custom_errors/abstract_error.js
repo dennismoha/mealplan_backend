@@ -20,7 +20,7 @@ class AbstractError extends Error {
     return {
       name: this.name,
       message: this.message,
-      stack: this.stack
+      // stack: this.stack 
       // any additional properties you want to include
     };
   }
