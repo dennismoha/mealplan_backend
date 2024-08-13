@@ -10,6 +10,8 @@ tags:
     description: Time interval for each meal plan. The name can be a unique string chosen by the user or days of the week, months etc
   - name: food category
     description: contains all foods in the meal plan site
+  - name: food-subcategory
+    description: subcategory of food
 # servers:
 #   - url: http://localhost:3000/api
 #     description: This is the server for localhost.
@@ -542,7 +544,249 @@ paths:
                         name: badRequest
                         message: "Bad request. The request body is missing required fields or contains invalid data"
 
-
+  /foodsubcategories:
+    get:
+      tags:
+        - food-subcategory
+      summary: Get all food subcategories
+      description: Each category of food will have it's children subcategory. 
+      operationId: fetchallfoodsubcategory
+      responses:
+        '200':
+          description: List of all food subcategories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        foodsubcategory_id:
+                          type: integer
+                          example: 1
+                        subcategory_name:
+                          type: string
+                          example: "Appetizers"
+                        description:
+                          type: string
+                          example: "Starters and small dishes"
+                        food_category_id:
+                          type: integer
+                          example: 10
+                        created_on:
+                          type: date-time
+                          example: 024-08-12T22:01:15.000Z
+                        updated_on: 
+                          type: date-time
+                          example: 024-08-12T22:01:15.000Z
+          '500':
+            description: 'server error'
+    post:
+      tags:
+        - food-subcategory
+      summary: Create a new food subcategory
+      requestBody:
+        description: Food subcategory data
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subcategory_name:
+                  type: string
+                  example: "Appetizers"
+                description:
+                  type: string
+                  example: "Starters and small dishes"
+                food_category_id:
+                  type: integer
+                  example: 'c3794f7f-3e0c-11ef-ba87-f816542ce27d'
+      responses:
+        '201':
+          description: Food subcategory created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 201
+                  data:
+                    type: object
+                    properties:                      
+                      subcategory_name:
+                        type: string
+                        example: "Appetizers"
+                      description:
+                        type: string
+                        example: "Starters and small dishes"
+                      food_category_id:
+                        type: integer
+                        example: 'c3794f7f-3e0c-11ef-ba87-f816542ce27d'
+        '409':
+          description: Conflict - subcategory already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Subcategory exists"
+  /foodsubcategories/{id}:
+    get:
+      tags:
+        - food-subcategory
+      summary: Get a single food subcategory by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the food subcategory
+      responses:
+        '200':
+          description: A single food subcategory
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  data:
+                    type: object
+                    properties:
+                      foodsubcategory_id:
+                        type: integer
+                        example: 1
+                      subcategory_name:
+                        type: string
+                        example: "Appetizers"
+                      description:
+                        type: string
+                        example: "Starters and small dishes"
+                      food_category_id:
+                        type: integer
+                        example: 10
+        '404':
+          description: Subcategory not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Subcategory not found"
+    put:
+      tags:
+        - food-subcategory
+      summary: Update an existing food subcategory
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the food subcategory to update
+      requestBody:
+        description: Updated food subcategory data
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subcategory_name:
+                  type: string
+                  example: "Appetizers"
+                description:
+                  type: string
+                  example: "Starters and small dishes"
+                food_category_id:
+                  type: integer
+                  example: 10
+      responses:
+        '200':
+          description: Food subcategory updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      subcategory_name:
+                        type: string
+                        example: "Appetizers"
+                      description:
+                        type: string
+                        example: "Starters and small dishes"
+                      food_category_id:
+                        type: integer
+                        example: 10
+        '404':
+          description: Subcategory not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Subcategory not found"
+        '409':
+          description: Conflict - subcategory name already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Subcategory name already exists"
+    delete:
+      tags:
+        - food-subcategory
+      summary: Delete a food subcategory
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the food subcategory to delete
+      responses:
+        '204':
+          description: Food subcategory deleted
+        '404':
+          description: Subcategory not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Subcategory not found"
   # /meal/meal-plan/{mealplankey}/{day}:
   #   put:
   #     tags:
@@ -711,6 +955,18 @@ components:
           type: string
           description: this is a url string for the image that contains a category
           example: https://www.orange.com/orange.jpeg
+
+    FoodSubcategory:
+      type: object
+      properties:
+        foodsubcategory_id:
+          type: integer
+        subcategory_name:
+          type: string
+        description:
+          type: string
+        food_category_id:
+          type: integer
 
     Error:
             type: object

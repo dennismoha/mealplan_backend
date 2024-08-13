@@ -44,7 +44,7 @@ exports.createFoodSubcategory = async (req, res) => {
   const insertSql = 'INSERT INTO foodsubcategory (subcategory_name, description, food_category_id) VALUES (?, ?, ?)';
   const result = await indexQuery.insertNewRecord(insertSql, [subcategory_name, description, food_category_id]);
 
-  res.status(StatusCodes.CREATED).send(getSuccessMessage(201, { id: result.insertId, subcategory_name, description, food_category_id }));
+  res.status(StatusCodes.CREATED).send(getSuccessMessage(201, { subcategory_name, description, food_category_id }));
 };
 
 // Update an existing food subcategory
