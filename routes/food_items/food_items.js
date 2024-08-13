@@ -28,4 +28,6 @@ router.delete(
   foodItemsController.deleteFoodItemById
 );
 
+router.post('/image', foodItemsController.createFoodItemImage)
+
 module.exports = router;

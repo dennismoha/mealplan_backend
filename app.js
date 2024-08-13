@@ -16,6 +16,7 @@ class Application {
 
   #loadConfiguration() {
     config.validateConfig();
+    config.cloudinaryConfig();
   }
 
   // catch exceptions
@@ -33,7 +34,7 @@ class Application {
 
     process.on('SIGTERM', (error) => {
       console.log('error ', error);
-      Application.#shutDownProperly(2);
+      Application.shutDownProperly(2);
     });
 
     process.on('exit', (error) => {

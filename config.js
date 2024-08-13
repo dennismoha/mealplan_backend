@@ -1,4 +1,5 @@
 const path =require('path')
+const cloudinary = require('cloudinary').v2
 
 if(process.env.NODE_ENV === 'production'){
   require('dotenv').config({ path: '.env.production' })
@@ -21,6 +22,9 @@ class Config {
   SESSION_NAME;
   PORT;
   BASE_URL;
+  CLOUDINARY_NAME;
+  CLOUDINARY_API_KEY;
+  CLOUDINARY_API_SECRET;
 
   constructor() {
     this.MYSQL_HOST = process.env.MYSQL_HOST;
@@ -37,6 +41,9 @@ class Config {
     this.SESSION_NAME=process.env.SESSION_NAME
     this.PORT = process.env.PORT
     this.BASE_URL = process.env.BASE_URL
+    this.CLOUDINARY_NAME = process.env.CLOUDINARY_NAME
+    this.CLOUDINARY_API_KEY=process.env.CLOUDINARY_API_KEY
+    this.CLOUDINARY_API_SECRET=process.env.CLOUDINARY_API_SECRET
   }
 
   // loop through each config to make sure it's key pair exists
@@ -47,6 +54,14 @@ class Config {
         throw new Error(`${key} configuration is undefined`);
       }
     }
+  }
+
+  cloudinaryConfig(){
+    cloudinary.config({
+      cloud_name: this.CLOUDINARY_NAME,
+      api_key: this.CLOUDINARY_API_KEY,
+      api_secret: this.CLOUDINARY_API_SECRET
+    })
   }
 }
 

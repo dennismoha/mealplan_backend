@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 const { StatusCodes } = require("http-status-codes");
+const cloudinary = require('cloudinary').v2;
 const { v4: uuidv4 } = require("uuid");
 const {
   getSuccessMessage,
@@ -21,6 +22,7 @@ const {
   DELETEFOODITEMQUEUE,
 } = require("#mealplan/constants.js");
 const foodItemDB = require("#mealplan/globals/services/db/food_item_db.js");
+const { upload } = require("#mealplan/config/cloudinary_upload.js");
 
 const indexQuery = new IndexQuery();
 // Create a new food item
@@ -81,6 +83,47 @@ exports.getAllFoodItems = async (req, res) => {
     );  
 };
 
+exports.createFoodItemImage = async(req,res) =>{
+  const image = req.body.image;
+
+  try {
+    const result =await upload(image)
+    if(!result.public_id){
+      throw new Error('Error uploading image')
+    }
+    console.log('image result is ', result)
+
+
+  
+    // Optimize delivery by resizing and applying auto-format and auto-quality
+    const optimizeUrl = cloudinary.url(result.public_id, {
+      fetch_format: 'auto',
+      quality: 'auto'
+  });
+  
+  console.log(optimizeUrl);
+  
+  // Transform the image: auto-crop to square aspect_ratio
+  const autoCropUrl = cloudinary.url(result.public_id, {
+      crop: 'auto',
+      gravity: 'auto',
+      width: 500,
+      height: 500,
+  });
+  
+  console.log(autoCropUrl);
+  
+    return res.status(200).json({result, autoCropUrl, optimizeUrl})
+  } catch (error) {
+    console.log('error is ', error);
+    return
+  }
+ 
+
+  
+
+}
+
 // Get a specific food item by ID
 exports.getFoodItemById = async (req, res) => {
   // get food item from cache
@@ -101,8 +144,8 @@ exports.getFoodItemById = async (req, res) => {
       getSuccessMessage(200, {
         foodItem
       })
-    );  
-  // return res.status(200).json({ message: "food item ", foodItem });
+    ); 
+ 
 };
 
 // Update a food item by ID
