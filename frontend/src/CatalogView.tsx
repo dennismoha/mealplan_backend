@@ -1,10 +1,11 @@
 import { FormEvent, useMemo, useState } from "react"
-import { createCategory, createFoodItem, createSubcategory, type Catalog, type FoodItem } from "./api"
+import { type Catalog, type FoodItem } from "./api"
+import { useCreateCategoryMutation, useCreateFoodItemMutation, useCreateSubcategoryMutation } from "./store/mealPlanApi"
 
-type Props = { catalog: Catalog; offline: boolean; reload: () => Promise<void>; onFood: (item: FoodItem) => void; notify: (kind: "success" | "error", message: string) => void }
+type Props = { catalog: Catalog; offline: boolean; onFood: (item: FoodItem) => void; notify: (kind: "success" | "error", message: string) => void }
 type AddKind = "category" | "subcategory" | "food" | null
 
-export default function CatalogView({ catalog, offline, reload, onFood, notify }: Props) {
+export default function CatalogView({ catalog, offline, onFood, notify }: Props) {
   const [query, setQuery] = useState("")
   const [category, setCategory] = useState("all")
   const [adding, setAdding] = useState<AddKind>(null)
@@ -19,7 +20,7 @@ export default function CatalogView({ catalog, offline, reload, onFood, notify }
     <div className="category-pills"><button className={category === "all" ? "active" : ""} onClick={() => setCategory("all")}>All foods <span>{catalog.foodItems.length}</span></button>{catalog.categories.map(cat => <button className={category === cat.food_categoryID ? "active" : ""} key={cat.food_categoryID} onClick={() => setCategory(cat.food_categoryID)}>{cat.category_name} <span>{catalog.foodItems.filter(i => i.category_id === cat.food_categoryID).length}</span></button>)}</div>
     <div className="food-grid">{filtered.map((item, index) => { const cat = catalog.categories.find(c => c.food_categoryID === item.category_id); return <button className="food-card" key={item.food_itemID || item.fooditem_cacheID || index} onClick={() => onFood(item)}><FoodImage item={item} /><div className="food-card-body"><span className="food-category">{cat?.category_name || "Uncategorised"}</span><h3>{item.food_name}</h3><p>{item.descriptionl || "No description added yet."}</p><span className="view-link">View ingredient <b>→</b></span></div></button> })}</div>
     {filtered.length === 0 && <div className="no-results"><span>⌕</span><h3>No ingredients found</h3><p>Try another search or add a new food item.</p></div>}
-    {adding && <AddCatalogModal kind={adding} catalog={catalog} close={() => setAdding(null)} saved={async () => { setAdding(null); await reload(); notify("success", "Your food library was updated.") }} fail={message => notify("error", message)} />}
+    {adding && <AddCatalogModal kind={adding} catalog={catalog} close={() => setAdding(null)} saved={() => { setAdding(null); notify("success", "Your food library was updated.") }} fail={message => notify("error", message)} />}
   </section>
 }
 
@@ -30,7 +31,8 @@ export function FoodImage({ item }: { item: FoodItem }) {
 
 function AddCatalogModal({ kind, catalog, close, saved, fail }: { kind: Exclude<AddKind, null>; catalog: Catalog; close: () => void; saved: () => void; fail: (m: string) => void }) {
   const [name, setName] = useState(""); const [description, setDescription] = useState(""); const [image, setImage] = useState(""); const [category, setCategory] = useState(catalog.categories[0]?.food_categoryID || ""); const [subcategory, setSubcategory] = useState(""); const [busy, setBusy] = useState(false)
-  const submit = async (e: FormEvent) => { e.preventDefault(); setBusy(true); try { if (kind === "category") await createCategory({ categoryName:name, description, imageURL:image }); if (kind === "subcategory") await createSubcategory({ subcategory_name:name, description, food_category_id:category }); if (kind === "food") await createFoodItem({ food_name:name, descriptionl:description, image_url:image, category_id:category, foodsubcategory_id:subcategory }); await saved() } catch (error) { fail(error instanceof Error ? error.message : "Could not save this item.") } finally { setBusy(false) } }
+  const [createCategory] = useCreateCategoryMutation(); const [createSubcategory] = useCreateSubcategoryMutation(); const [createFoodItem] = useCreateFoodItemMutation()
+  const submit = async (e: FormEvent) => { e.preventDefault(); setBusy(true); try { if (kind === "category") await createCategory({ categoryName:name, description, imageURL:image }).unwrap(); if (kind === "subcategory") await createSubcategory({ subcategory_name:name, description, food_category_id:category }).unwrap(); if (kind === "food") await createFoodItem({ food_name:name, descriptionl:description, image_url:image, category_id:category, foodsubcategory_id:subcategory }).unwrap(); saved() } catch (error) { fail(error instanceof Error ? error.message : "Could not save this item.") } finally { setBusy(false) } }
   const title = kind === "food" ? "New food item" : kind === "subcategory" ? "New subcategory" : "New category"
   return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && close()}><form className="modal compact" onSubmit={submit}><button type="button" className="close" onClick={close}>×</button><span className="eyebrow">Grow your library</span><h2>{title}</h2><p className="modal-copy">Add a clear name and enough detail to recognise it later.</p><div className="stack-fields"><label><span>Name</span><input required value={name} onChange={e => setName(e.target.value)} /></label><label><span>Description</span><textarea required value={description} onChange={e => setDescription(e.target.value)} /></label>{kind !== "category" && <label><span>Category</span><select required value={category} onChange={e => setCategory(e.target.value)}>{catalog.categories.map(c => <option value={c.food_categoryID} key={c.food_categoryID}>{c.category_name}</option>)}</select></label>}{kind === "food" && <label><span>Subcategory</span><select value={subcategory} onChange={e => setSubcategory(e.target.value)}><option value="">None</option>{catalog.subcategories.filter(s => s.food_category_id === category).map(s => <option value={s.foodsubcategory_id} key={s.foodsubcategory_id}>{s.subcategory_name}</option>)}</select></label>}{kind !== "subcategory" && <label><span>Image URL <small>optional</small></span><input type="url" value={image} onChange={e => setImage(e.target.value)} placeholder="https://…" /></label>}</div><div className="modal-actions"><span/><button type="button" className="secondary" onClick={close}>Cancel</button><button className="primary" disabled={busy}>{busy ? "Saving…" : "Save"}</button></div></form></div>
 }

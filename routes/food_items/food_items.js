@@ -7,15 +7,17 @@ const {
   getFoodItemByIdValidator,
   deleteFoodItemByIdValidator
 } = require('../../middlewares/validator/food_items/food_items_validator');
+const verifyJwt = require('../../config/auth_token');
+const { requireRoles } = require('../../middlewares/validator/auth/user_role_checker');
 
 // Create a new food item
-router.post('/', createFoodItemValidator, foodItemsController.createFoodItem);
+router.post('/', verifyJwt, requireRoles('admin'), createFoodItemValidator, foodItemsController.createFoodItem);
 
 // Get all food items
 router.get('/', foodItemsController.getAllFoodItems);
 
 // Update a food item by ID
-router.put('/update/:id', updateFoodItemValidator, foodItemsController.updateFoodItemById);
+router.put('/update/:id', verifyJwt, requireRoles('admin'), updateFoodItemValidator, foodItemsController.updateFoodItemById);
 
 // Get a specific food item by ID
 router.get('/:id', getFoodItemByIdValidator, foodItemsController.getFoodItemById);
@@ -23,6 +25,8 @@ router.get('/:id', getFoodItemByIdValidator, foodItemsController.getFoodItemById
 // Delete a food item by ID
 router.delete(
   '/fooditems/:id',
+  verifyJwt,
+  requireRoles('admin'),
   deleteFoodItemByIdValidator,
 
   foodItemsController.deleteFoodItemById

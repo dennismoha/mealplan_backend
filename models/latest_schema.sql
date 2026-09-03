@@ -341,10 +341,12 @@ DROP TABLE IF EXISTS `mealplantime`;
 CREATE TABLE `mealplantime` (
   `idmealPlanWeek` int NOT NULL AUTO_INCREMENT,
   `meal_plan_name` varchar(45) NOT NULL,
+  `owner_user_id` int DEFAULT NULL,
   `created_on` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`idmealPlanWeek`),
-  UNIQUE KEY `meal_plan_name_UNIQUE` (`meal_plan_name`)
+  UNIQUE KEY `meal_plan_name_UNIQUE` (`meal_plan_name`),
+  KEY `mealplantime_owner_user_id_idx` (`owner_user_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -354,7 +356,7 @@ CREATE TABLE `mealplantime` (
 
 LOCK TABLES `mealplantime` WRITE;
 /*!40000 ALTER TABLE `mealplantime` DISABLE KEYS */;
-INSERT INTO `mealplantime` VALUES (1,'september week 1',NULL,'2023-11-23 14:45:33'),(2,'week2',NULL,'2023-11-23 14:45:33'),(3,'week3',NULL,'2023-11-23 14:45:33'),(4,'week5',NULL,'2023-11-23 14:47:36'),(7,'week10','2023-11-23 15:22:00','2023-11-23 14:45:33'),(8,'week901','2023-11-23 17:47:53','2023-11-23 14:48:06'),(9,'april-week-1','2024-04-11 06:26:39','2024-04-11 03:26:39'),(10,'sample100','2024-04-11 07:15:37','2024-08-06 21:00:11'),(11,'april-week-3','2024-04-11 07:17:20','2024-04-11 04:17:20'),(12,'april-week-4','2024-04-11 07:18:34','2024-04-11 04:18:34'),(13,'june-week-1','2024-04-11 07:20:32','2024-04-11 04:20:32'),(14,'june-week-2','2024-04-11 07:22:44','2024-04-11 04:22:44'),(15,'june-week-3','2024-04-11 07:47:44','2024-04-11 04:47:44'),(16,'june-week-4','2024-04-11 07:52:26','2024-04-11 04:52:26'),(17,'may-week-1','2024-04-11 07:54:27','2024-04-11 04:54:27'),(18,'may-week-2','2024-04-11 07:55:37','2024-04-11 04:55:37'),(20,'sample','2024-08-06 03:05:10','2024-08-06 20:23:19'),(23,'gym','2026-09-03 13:33:32','2026-09-03 10:33:32');
+INSERT INTO `mealplantime` (`idmealPlanWeek`, `meal_plan_name`, `created_on`, `updated_at`) VALUES (1,'september week 1',NULL,'2023-11-23 14:45:33'),(2,'week2',NULL,'2023-11-23 14:45:33'),(3,'week3',NULL,'2023-11-23 14:45:33'),(4,'week5',NULL,'2023-11-23 14:47:36'),(7,'week10','2023-11-23 15:22:00','2023-11-23 14:45:33'),(8,'week901','2023-11-23 17:47:53','2023-11-23 14:48:06'),(9,'april-week-1','2024-04-11 06:26:39','2024-04-11 03:26:39'),(10,'sample100','2024-04-11 07:15:37','2024-08-06 21:00:11'),(11,'april-week-3','2024-04-11 07:17:20','2024-04-11 04:17:20'),(12,'april-week-4','2024-04-11 07:18:34','2024-04-11 04:18:34'),(13,'june-week-1','2024-04-11 07:20:32','2024-04-11 04:20:32'),(14,'june-week-2','2024-04-11 07:22:44','2024-04-11 04:22:44'),(15,'june-week-3','2024-04-11 07:47:44','2024-04-11 04:47:44'),(16,'june-week-4','2024-04-11 07:52:26','2024-04-11 04:52:26'),(17,'may-week-1','2024-04-11 07:54:27','2024-04-11 04:54:27'),(18,'may-week-2','2024-04-11 07:55:37','2024-04-11 04:55:37'),(20,'sample','2024-08-06 03:05:10','2024-08-06 20:23:19'),(23,'gym','2026-09-03 13:33:32','2026-09-03 10:33:32');
 /*!40000 ALTER TABLE `mealplantime` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -638,6 +640,10 @@ LOCK TABLES `users` WRITE;
 INSERT INTO `users` VALUES (9,'maa@mail.com','$2b$10$iBYPxQTgcr0jkD4KYoYWAO4K42x2HfzWV.vROgaZxMhauprUzZoeu','user',NULL,NULL,NULL,NULL,'2023-11-23 18:31:04','2023-11-23 18:31:04'),(10,'mem@mail.com','$2b$10$Fu90cbv5bFJABoUDJBQqtu2efcDUSyHqffPVGElrfuWJkib9OAq3m','user',NULL,NULL,NULL,'','2023-11-23 18:31:04','2023-11-23 18:31:04'),(11,'den@mail.com','$2b$10$N.uiI4CyKgoCLi/31LMacey4.uBgIJE8atLt5YnmBD44Q5ApWLsDy','user',NULL,NULL,NULL,'','2023-11-23 18:31:04','2023-11-23 18:31:04'),(12,'admin@mail.com','$2b$10$BnxsDxbk.xGuM9qqT.zGPeM/4YVbE0kN.ETi3tBqb/U1JL6L6NDe6','admin',NULL,NULL,NULL,'','2023-11-23 18:31:04','2023-11-23 18:31:04'),(13,'admin1@mail.com','$2b$10$LBpvMZwnFKJAMuPdA/DeuuOb68x4vXmjrpL/qaQt5A91EIADQf78a','user',NULL,NULL,NULL,NULL,'2023-11-23 18:31:04','2023-11-23 18:31:04'),(14,'user@mail.com','$2b$10$qdfpEQbfo7QGz35x92gmd.s.uY1JKKNCbhV6sf4oeovzXnUkwGnkK','user',NULL,NULL,NULL,'','2023-11-23 18:31:04','2023-11-23 18:31:04'),(15,'user1@mail.com','$2b$10$6NK9Jjeh/JFGGt6xy7h6C.cVNPfn5pxzNYZvbqYS8vORKBMwBg/Y2','user',NULL,NULL,NULL,'','2023-11-23 18:31:04','2023-11-23 18:31:04');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
+
+ALTER TABLE `mealplantime`
+  ADD CONSTRAINT `mealplantime_owner` FOREIGN KEY (`owner_user_id`)
+  REFERENCES `users` (`idusers`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Dumping events for database 'meal_plan'

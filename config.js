@@ -1,10 +1,16 @@
-const path =require('path')
-const cloudinary = require('cloudinary').v2
-
 if(process.env.NODE_ENV === 'production'){
   require('dotenv').config({ path: '.env.production' })
 }
 require('dotenv').config();
+
+// The Cloudinary SDK reads CLOUDINARY_URL as soon as it is imported and throws
+// when the value is not a complete `cloudinary://...` URL. This project uses
+// the three explicit credentials below, so ignore only malformed URL values.
+if (process.env.CLOUDINARY_URL && !process.env.CLOUDINARY_URL.startsWith('cloudinary://')) {
+  delete process.env.CLOUDINARY_URL;
+}
+
+const cloudinary = require('cloudinary').v2
 
 
 class Config {

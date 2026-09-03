@@ -5,9 +5,9 @@ const { checkDatabaseConnection, closeDatabaseConnection } = require('./setup_da
 const config = require('./config');
 
 class Application {
-  initializeApp() {
+  async initializeApp() {
     this.#loadConfiguration();
-    checkDatabaseConnection();
+    await checkDatabaseConnection();
     const app = express();
     const server = new MealPlanServer(app);
     server.start();
@@ -64,4 +64,7 @@ class Application {
 }
 
 const application = new Application();
-application.initializeApp();
+application.initializeApp().catch((error) => {
+  console.error('Application startup failed:', error.message);
+  process.exit(1);
+});

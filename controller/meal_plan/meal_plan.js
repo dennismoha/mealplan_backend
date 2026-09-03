@@ -3,7 +3,6 @@
 
 const { StatusCodes } = require("http-status-codes");
 const MealPlanDB = require("#mealplan/globals/services/db/meal_plan_db.js");
-const IndexQuery = require("#mealplan/globals/services/db/db_query_utilities.js");
 const {
   mealPlanRedis,
 } = require("#mealplan/globals/services/redis/meal_plan.js");
@@ -30,6 +29,11 @@ exports.fetchMealPlans = async (req, res) => {
     await mealPlanRedis.saveMealPlanToCache(meals);
   }
 
+  return res.status(StatusCodes.OK).json({ meals });
+};
+
+exports.fetchMyMealPlans = async (req, res) => {
+  const meals = await mealPlanDB.fetchMealPlansForOwner(req.userId);
   return res.status(StatusCodes.OK).json({ meals });
 };
 

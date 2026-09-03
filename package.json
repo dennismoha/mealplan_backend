@@ -13,7 +13,8 @@
     "prettier:check": "prettier --check \"./**/*.js\" ",
     "prettier:fix": "prettier --write \"./**/*.js\" ",
     "docs": "jsdoc -c jsdoc.json",
-    "jsdocs": "jsdoc ./*.js -r"
+    "jsdocs": "jsdoc ./*.js -r",
+    "seed:admin": "node scripts/seed_admin.js"
   },
   "dependencies": {
     "@bull-board/api": "^5.15.3",
@@ -43,6 +44,7 @@
     "mysql2": "^3.6.1",
     "pm2": "^5.4.1",
     "redis": "^4.6.13",
+    "sequelize": "^6.37.5",
     "swagger-jsdoc": "^6.0.0",
     "swagger-stats": "^0.99.7",
     "swagger-ui-express": "^5.0.1",

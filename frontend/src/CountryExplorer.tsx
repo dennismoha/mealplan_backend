@@ -1,0 +1,9 @@
+import { useState } from "react"
+import type { Catalog, Country, FoodItem } from "./api"
+
+export default function CountryExplorer({ catalog, onFood }: { catalog: Catalog; onFood: (food: FoodItem) => void }) {
+  const [selected, setSelected] = useState<Country | null>(null)
+  const foods = selected ? catalog.foodItems.filter(food => food.countries?.some(country => country.id === selected.id)) : []
+  const meals = selected ? catalog.mealTypes.filter(meal => meal.countries?.some(country => country.id === selected.id)) : []
+  return <section className="country-section" id="countries"><div className="section-heading"><div><span className="eyebrow">Food around the world</span><h2>Explore by country</h2></div></div><div className="country-grid">{catalog.countries.map(country => <button key={country.id} onClick={() => setSelected(country)}><span>{country.code}</span><h3>{country.name}</h3><p>{country.description}</p><b>Explore food →</b></button>)}</div>{selected&&<div className="modal-backdrop" onMouseDown={e=>e.target===e.currentTarget&&setSelected(null)}><div className="modal country-modal"><button className="close" onClick={()=>setSelected(null)}>×</button><span className="eyebrow">{selected.code} · Food culture</span><h2>{selected.name}</h2><p className="modal-copy">{selected.description}</p><h3>Foods grown or used here</h3>{foods.length?<div className="mini-grid">{foods.map(food=><button key={food.food_itemID} onClick={()=>onFood(food)}>{food.food_name}<span>View details →</span></button>)}</div>:<p className="muted">No foods have been linked yet.</p>}<h3>Meals from {selected.name}</h3>{meals.length?<div className="mini-grid">{meals.map(meal=><div key={meal.mealTypesID}>{meal.meal_name}<span>{catalog.recipes.filter(r=>r.meal_typeID===meal.mealTypesID).length} recipes</span></div>)}</div>:<p className="muted">No meals have been linked yet.</p>}</div></div>}</section>
+}

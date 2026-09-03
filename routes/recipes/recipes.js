@@ -1,0 +1,2 @@
+const router = require('express').Router(); const controller = require('../../controller/recipes/recipes'); const verifyJwt = require('../../config/auth_token'); const { requireRoles } = require('../../middlewares/validator/auth/user_role_checker');
+router.get('/', controller.list); router.post('/', verifyJwt, requireRoles('professional', 'admin'), controller.create); router.put('/:id', verifyJwt, requireRoles('professional', 'admin'), controller.update); router.delete('/:id', verifyJwt, requireRoles('professional', 'admin'), controller.remove); module.exports = router;

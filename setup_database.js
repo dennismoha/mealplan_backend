@@ -1,24 +1,16 @@
-const { pool } = require('./config/db');
+const { sequelize } = require('./models/orm');
 const { redisConnection } = require('./globals/services/redis/redis.connection');
+const { bootstrapIdentityData, ensureOwnershipSchema, ensureFoodCultureSchema } = require('./models/orm/bootstrap');
 
 // Function to check database connection
 async function checkDatabaseConnection() {
   try {
-    // now get a Promise wrapped instance of that pool
-    const promisePool = pool.promise();
-    const connection = await promisePool.getConnection();
-    console.log('Connected to MySQL database.');
-
-    await connection.ping((pingErr) => {
-      connection.release();
-      if (!pingErr) {
-        return;
-      }
-      process.exit(1);
-    });
+    await sequelize.authenticate();
     console.log('MySQL database is reachable.');
-
-    connection.release(); // Release the MySQL connection after using it
+    await ensureOwnershipSchema();
+    await ensureFoodCultureSchema();
+    const admin = await bootstrapIdentityData();
+    if (admin.created) console.log('Initial administrator account created.');
 
     // Now check Redis connection
     await redisConnection.redisPingAsync();
@@ -32,11 +24,7 @@ async function checkDatabaseConnection() {
 }
 
 async function closeDatabaseConnection() {
-  const promisePool = pool.promise();
-  promisePool.end((err) => {
-    console.log('database pool connection closed err ', err);
-    return;
-  });
+  await sequelize.close();
   console.log('database pool connection closed success');
   return;
 }

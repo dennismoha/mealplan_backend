@@ -34,6 +34,8 @@ const foodItemRoutes = require("./routes/food_items/food_items");
 const foodVariationRoutes = require("./routes/food_variations/food_variations");
 const foodSubcategoryRoutes = require("./routes/food_sub_category/food_sub_category");
 const catalogRoutes = require("./routes/catalog/catalog");
+const countryRoutes = require("./routes/countries/countries");
+const recipeRoutes = require("./routes/recipes/recipes");
 const errorHandler = require("./middlewares/custom_errors/error-handler");
 const dbHealth = require("./routes/health/health");
 
@@ -129,7 +131,7 @@ class MealPlanServer {
     app.use(`/${baseUrl}/meal/types`, mealTypeFoodRouter);
     app.use(`/${config.BASE_URL}/meal/meal-plan`, mealPlanRouter);
     app.use(`/${baseUrl}/meal/meals`, mealsRouter);
-    app.use(`/${baseUrl}/meal/type`, mealTypeRouter); // Corrected from mealmealType to mealType
+    app.use(`/${baseUrl}/meal/type`, mealmealType);
     app.use(`/${baseUrl}/meal/meal-plan/time-intervals`, mealplanTimeRoutes);
 
     // Food-related routes
@@ -139,6 +141,8 @@ class MealPlanServer {
     // Use routes
     app.use(`/${config.BASE_URL}/foodsubcategories`, foodSubcategoryRoutes);
     app.use(`/${config.BASE_URL}/catalog`, catalogRoutes);
+    app.use(`/${config.BASE_URL}/countries`, countryRoutes);
+    app.use(`/${config.BASE_URL}/recipes`, recipeRoutes);
 
     // Health route
     app.use("/health", dbHealth);

@@ -6,7 +6,6 @@ const {
   getSuccessMessage,
 } = require("#mealplan/middlewares/custom_success/sucess_message.js");
 
-const IndexQuery = require("#mealplan/globals/services/db/db_query_utilities.js");
 const conflictError = require("#mealplan/middlewares/custom_errors/conflict_error.js");
 
 const winstonLogger = require("#mealplan/config/winston_logger.js");
@@ -22,20 +21,16 @@ const {
   DELETEFOODITEMQUEUE,
 } = require("#mealplan/constants.js");
 const foodItemDB = require("#mealplan/globals/services/db/food_item_db.js");
+const { FoodItem } = require("#mealplan/models/orm/index.js");
 const { upload } = require("#mealplan/config/cloudinary_upload.js");
 
-const indexQuery = new IndexQuery();
 // Create a new food item
 
 exports.createFoodItem = async (req, res) => {
   const { food_name } = req.body;
 
   // Check if the food item already exists
-  const checkExistingQuery = "SELECT * FROM fooditems WHERE food_name = ? ";
-  const existingFoodItem = await indexQuery.checkIfRecordExists(
-    checkExistingQuery,
-    [food_name]
-  );
+  const existingFoodItem = await FoodItem.findAll({ where: { food_name } });
 
   if (existingFoodItem.length > 0) {
     // Food item with the same name or ID already exists
@@ -151,12 +146,11 @@ exports.getFoodItemById = async (req, res) => {
 // Update a food item by ID
 exports.updateFoodItemById = async (req, res) => {
   // Check if the food item already exists
-  const checkExistingQuery =
-    "SELECT food_name, category_id,fooditem_cacheID  FROM fooditems WHERE food_name = ?  ";
-  const existingFoodItem = await indexQuery.checkIfRecordExists(
-    checkExistingQuery,
-    [req.body.food_name]
-  );
+  const existingFoodItem = await FoodItem.findAll({
+    attributes: ['food_name', 'category_id', 'fooditem_cacheID'],
+    where: { food_name: req.body.food_name },
+    raw: true
+  });
 
   console.log("existing food item is ", existingFoodItem);
 

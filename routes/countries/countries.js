@@ -1,0 +1,11 @@
+const router = require('express').Router();
+const controller = require('../../controller/countries/countries');
+const verifyJwt = require('../../config/auth_token');
+const { requireRoles } = require('../../middlewares/validator/auth/user_role_checker');
+router.get('/', controller.list); router.get('/:id', controller.get);
+router.post('/', verifyJwt, requireRoles('admin'), controller.create);
+router.put('/:id', verifyJwt, requireRoles('admin'), controller.update);
+router.delete('/:id', verifyJwt, requireRoles('admin'), controller.remove);
+router.post('/:id/foods', verifyJwt, requireRoles('admin'), controller.linkFood);
+router.post('/:id/meals', verifyJwt, requireRoles('admin'), controller.linkMeal);
+module.exports = router;
