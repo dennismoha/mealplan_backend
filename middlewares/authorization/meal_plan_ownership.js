@@ -1,4 +1,4 @@
-const { MealPlanTime } = require('../../models/orm');
+const prisma = require('../../models/prisma');
 
 const requireMealPlanOwnership = source => async (req, res, next) => {
   if (req.roles === 'admin') return next();
@@ -7,7 +7,8 @@ const requireMealPlanOwnership = source => async (req, res, next) => {
   const where = source === 'interval-id'
     ? { idmealPlanWeek: req.params.id }
     : { meal_plan_name: req.body.mealplan_key || req.params.mealplankey };
-  const interval = await MealPlanTime.findOne({ where, attributes: ['idmealPlanWeek', 'owner_user_id'], raw: true });
+  if (where.idmealPlanWeek) where.idmealPlanWeek = Number(where.idmealPlanWeek);
+  const interval = await prisma.mealplantime.findFirst({ where, select: { idmealPlanWeek: true, owner_user_id: true } });
   if (!interval) return res.status(404).json({ message: 'Meal plan not found' });
   if (interval.owner_user_id !== req.userId) return res.status(403).json({ message: 'You can only change meal plans that you created' });
   req.mealPlanInterval = interval;

@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { useSelector } from "react-redux"
-import type { Catalog, Recipe } from "./api"
-import type { RootState } from "./store"
-import { useDeleteRecipeMutation } from "./store/mealPlanApi"
+import type { Catalog, Recipe } from "../api"
+import type { RootState } from "../store"
+import { useDeleteRecipeMutation } from "../store/mealPlanApi"
 import RecipeForm from "./RecipeForm"
 
 export default function RecipeManager({ catalog, notify }: { catalog: Catalog; notify: (kind: "success" | "error", message: string) => void }) {

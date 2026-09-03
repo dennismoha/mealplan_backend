@@ -2,7 +2,7 @@
     THIS IS CONSISTS OF  JWT AUTHENTICATION TOKEN
 */
 const jwt = require('jsonwebtoken');
-const { User } = require('../models/orm');
+const prisma = require('../models/prisma');
 const { accessTokenSecret } = require('./token_secrets');
 
 module.exports = async (req, res, next) => {
@@ -25,8 +25,8 @@ module.exports = async (req, res, next) => {
   req.userId = decodedToken.userId;
   req.userEmail = decodedToken.email || decodedToken.userId;
   req.roles = decodedToken.role || decodedToken.roles;
-  const user = await User.findByPk(req.userId, { attributes: ['idusers', 'role', 'status'], raw: true });
-  if (!user || user.status === 'revoked') return res.status(403).json({ message: 'This account is revoked' });
+  const user = await prisma.users.findUnique({ where: { idusers: Number(req.userId) }, select: { idusers: true, role: true, userscol: true } });
+  if (!user || user.userscol === 'revoked') return res.status(403).json({ message: 'This account is revoked' });
   req.roles = user.role;
   console.log('decoded token is ', req.userId);
   next();

@@ -1,6 +1,6 @@
 import { FormEvent, useMemo, useState } from "react"
-import { type Catalog, type FoodItem } from "./api"
-import { useCreateCategoryMutation, useCreateFoodItemMutation, useCreateSubcategoryMutation } from "./store/mealPlanApi"
+import { type Catalog, type FoodItem } from "../api"
+import { useCreateCategoryMutation, useCreateFoodItemMutation, useCreateSubcategoryMutation } from "../store/mealPlanApi"
 
 type Props = { catalog: Catalog; offline: boolean; onFood: (item: FoodItem) => void; notify: (kind: "success" | "error", message: string) => void }
 type AddKind = "category" | "subcategory" | "food" | null

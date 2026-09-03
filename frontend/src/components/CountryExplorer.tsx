@@ -1,5 +1,5 @@
 import { useState } from "react"
-import type { Catalog, Country, FoodItem } from "./api"
+import type { Catalog, Country, FoodItem } from "../api"
 
 export default function CountryExplorer({ catalog, onFood }: { catalog: Catalog; onFood: (food: FoodItem) => void }) {
   const [selected, setSelected] = useState<Country | null>(null)

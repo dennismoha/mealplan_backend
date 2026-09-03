@@ -1,23 +1,26 @@
 const { StatusCodes } = require('http-status-codes');
-const { Op } = require('sequelize');
-const { FoodCategory, FoodSubcategory } = require('../../models/orm');
+const { v4: uuidv4 } = require('uuid');
+const prisma = require('../../models/prisma');
 const ConflictError = require('../../middlewares/custom_errors/conflict_error');
 const { getSuccessMessage } = require('../../middlewares/custom_success/sucess_message');
 
-exports.getAllFoodCategories = async (req, res) => res.status(200).send(getSuccessMessage(200, await FoodCategory.findAll({ order: [['category_name', 'ASC']], raw: true })));
-exports.getSingleCategory = async (req, res) => res.status(200).send(getSuccessMessage(200, await FoodCategory.findOne({ where: { food_categoryID: req.params.id }, raw: true })));
+exports.getAllFoodCategories = async (req, res) => res.status(200).send(getSuccessMessage(200, await prisma.foodcategory.findMany({ orderBy: { category_name: 'asc' } })));
+exports.getSingleCategory = async (req, res) => res.status(200).send(getSuccessMessage(200, await prisma.foodcategory.findUnique({ where: { food_categoryID: req.params.id } })));
 exports.createFoodCategory = async (req, res) => {
   const { categoryName, description, imageURL } = req.body;
-  if (await FoodCategory.findOne({ where: { category_name: categoryName } })) throw new ConflictError('Food category already exists');
-  await FoodCategory.create({ category_name: categoryName, description, image_url: imageURL });
+  if (await prisma.foodcategory.findUnique({ where: { category_name: categoryName } })) throw new ConflictError('Food category already exists');
+  await prisma.foodcategory.create({ data: { category_name: categoryName, description, image_url: imageURL, food_categoryID: uuidv4() } });
   res.status(StatusCodes.CREATED).send(getSuccessMessage(201, []));
 };
 exports.updateFoodCategory = async (req, res) => {
   const { categoryName, description, imageURL } = req.body; const id = req.params.id;
-  if (await FoodCategory.findOne({ where: { category_name: categoryName, food_categoryID: { [Op.ne]: id } } })) throw new ConflictError('Food category already exists');
-  await FoodCategory.update({ category_name: categoryName, description, image_url: imageURL }, { where: { food_categoryID: id } });
-  const Category = await FoodCategory.findOne({ where: { food_categoryID: id }, raw: true });
+  if (await prisma.foodcategory.findFirst({ where: { category_name: categoryName, food_categoryID: { not: id } } })) throw new ConflictError('Food category already exists');
+  const Category = await prisma.foodcategory.update({ data: { category_name: categoryName, description, image_url: imageURL }, where: { food_categoryID: id } });
   res.status(200).json({ message: 'Successfully updated the food category details', Category });
 };
-exports.deleteFoodCategory = async (req, res) => { await FoodCategory.destroy({ where: { food_categoryID: req.params.id } }); res.status(204).send(); };
-exports.getFoodSubcategoryDetails = async (req, res) => res.status(200).json({ message: 'Data fetched successfully', data: await FoodCategory.findAll({ include: [{ model: FoodSubcategory, as: 'subcategories', required: false }], order: [['category_name', 'ASC']] }) });
+exports.deleteFoodCategory = async (req, res) => { await prisma.foodcategory.delete({ where: { food_categoryID: req.params.id } }); res.status(204).send(); };
+exports.getFoodSubcategoryDetails = async (req, res) => {
+  const rows = await prisma.foodcategory.findMany({ include: { foodsubcategory: true }, orderBy: { category_name: 'asc' } });
+  const data = rows.map(({ foodsubcategory, ...category }) => ({ ...category, subcategories: foodsubcategory }));
+  return res.status(200).json({ message: 'Data fetched successfully', data });
+};

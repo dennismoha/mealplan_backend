@@ -1,30 +1,30 @@
 const foodItemDB = require('../services/db/food_item_db');
 
 class FoodItemWorker {
-  addFoodItemToDb(job, done) {
+  async addFoodItemToDb(job, done) {
     try {
       console.log('jobqueue', 'done ');
-      foodItemDB.addFoodItemToDB(job.data);
+      await foodItemDB.addFoodItemToDB(job.data);
       done(null, job.data);
     } catch (error) {
       console.log('error is ', error);
       done(error);
     }
   }
-  updateFoodItemToDb(job, done) {
+  async updateFoodItemToDb(job, done) {
     try {
       console.log('jobqueue', 'done ');
-      foodItemDB.updateFoodItemInDb(job.data);
+      await foodItemDB.updateFoodItemInDb(job.data);
       done(null, job.data);
     } catch (error) {
       console.log('error is ', error);
       done(error);
     }
   } // delete food item from db
-  deleteFoodItemToDb(job, done) {
+  async deleteFoodItemToDb(job, done) {
     try {
       console.log('jobqueue', 'done ');
-      foodItemDB.deleteFoodItemInDb(job.data);
+      await foodItemDB.deleteFoodItemInDb(job.data);
       done(null, job.data);
     } catch (error) {
       console.log('error is ', error);

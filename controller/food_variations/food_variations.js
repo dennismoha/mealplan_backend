@@ -1,13 +1,11 @@
-const IndexQuery = require('../query_utiltity/index');
-
-const indexQuery = new IndexQuery();
+const prisma = require('../../models/prisma');
 
 exports.getAllFoodVariations = async (req, res) => {
   // SQL query to get all food variations
   const getAllVariationsSql = 'SELECT * FROM food_variations';
 
   try {
-    const variations = await indexQuery.getAll(getAllVariationsSql);
+    const variations = await prisma.$queryRawUnsafe(getAllVariationsSql);
     res.json(variations);
   } catch (error) {
     console.error(error);
@@ -18,11 +16,8 @@ exports.getAllFoodVariations = async (req, res) => {
 exports.getFoodVariationById = async (req, res) => {
   const id = req.params.id;
 
-  // SQL query to get food variation by ID
-  const getVariationByIdSql = 'SELECT * FROM food_variations WHERE idfood_variations = ?';
-
   try {
-    const variation = await indexQuery.getById(getVariationByIdSql, [id]);
+    const variation = (await prisma.$queryRaw`SELECT * FROM food_variations WHERE idfood_variations = ${Number(id)} LIMIT 1`)[0];
 
     if (!variation) {
       return res.status(404).json({ error: 'Food Variation not found' });
@@ -38,31 +33,17 @@ exports.getFoodVariationById = async (req, res) => {
 exports.createFoodVariation = async (req, res) => {
   const variationData = req.body;
 
-  // SQL query to check if food variation with the same name already exists
-  const checkIfVariationExistsSql = 'SELECT * FROM food_variations WHERE variation_name = ?';
-  const existingVariation = await indexQuery.checkIfRecordExists(checkIfVariationExistsSql, [
-    variationData.variation_name
-  ]);
+  const existingVariation = await prisma.$queryRaw`SELECT * FROM food_variations WHERE variation_name = ${variationData.variation_name}`;
 
   console.log('existing food variation is ', existingVariation);
   if (existingVariation.length !== 0) {
     return res.status(400).json({ message: 'Food Variation with the same name already exists' });
   }
 
-  // SQL query to insert new food variation
-  const createFoodVariationSql = `
-    INSERT INTO food_variations (variation_name, foodItemsID, foodVariationsID)
-    VALUES (?, ?, ?)
-  `;
-
   try {
-    const variationId = await indexQuery.insertNewRecord(createFoodVariationSql, [
-      variationData.variation_name,
-      variationData.foodItemsID,
-      variationData.foodVariationsID
-    ]);
+    await prisma.$executeRaw`INSERT INTO food_variations (variation_name, foodItemsID, foodVariationsID) VALUES (${variationData.variation_name}, ${variationData.foodItemsID}, ${variationData.foodVariationsID})`;
 
-    res.json({ id: variationId, message: 'Food Variation successfully created' });
+    res.json({ id: variationData.foodVariationsID, message: 'Food Variation successfully created' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -73,20 +54,8 @@ exports.updateFoodVariationById = async (req, res) => {
   const id = req.params.id;
   const variationData = req.body;
 
-  // SQL query to update food variation
-  const updateFoodVariationSql = `
-    UPDATE food_variations
-    SET variation_name = ?, foodItemsID = ?, foodVariationsID = ?
-    WHERE idfood_variations = ?
-  `;
-
   try {
-    await indexQuery.updateRecord(updateFoodVariationSql, [
-      variationData.variation_name,
-      variationData.foodItemsID,
-      variationData.foodVariationsID,
-      id
-    ]);
+    await prisma.$executeRaw`UPDATE food_variations SET variation_name = ${variationData.variation_name}, foodItemsID = ${variationData.foodItemsID}, foodVariationsID = ${variationData.foodVariationsID} WHERE idfood_variations = ${Number(id)}`;
 
     res.json({ message: 'Food Variation updated successfully' });
   } catch (error) {
@@ -98,11 +67,8 @@ exports.updateFoodVariationById = async (req, res) => {
 exports.deleteFoodVariationById = async (req, res) => {
   const id = req.params.id;
 
-  // SQL query to delete food variation by ID
-  const deleteFoodVariationSql = 'DELETE FROM food_variations WHERE idfood_variations = ?';
-
   try {
-    await indexQuery.deleteRecord(deleteFoodVariationSql, [id]);
+    await prisma.$executeRaw`DELETE FROM food_variations WHERE idfood_variations = ${Number(id)}`;
     res.json({ message: 'Food Variation deleted successfully' });
   } catch (error) {
     console.error(error);

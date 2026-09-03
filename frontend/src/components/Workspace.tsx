@@ -1,15 +1,16 @@
 import { FormEvent, useEffect, useMemo, useState } from "react"
-import { type DayMeals, type FoodItem } from "./api"
-import { demoPlans } from "./demo"
+import { type DayMeals, type FoodItem } from "../api"
+import { demoPlans } from "../demo"
 import CatalogView from "./CatalogView"
 import { FoodDrawer, MealDrawer } from "./DetailDrawers"
-import { useCreateIntervalMutation, useDeleteDayMutation, useGetCatalogQuery, useGetPlansQuery, useSaveDayMutation } from "./store/mealPlanApi"
+import { useCreateIntervalMutation, useDeleteDayMutation, useGetCatalogQuery, useGetPlansQuery, useSaveDayMutation } from "../store/mealPlanApi"
 import { useSelector } from "react-redux"
-import type { RootState } from "./store"
+import type { RootState } from "../store"
 import { AccountButton, AdminPanel } from "./AuthWorkspace"
 import CountryExplorer from "./CountryExplorer"
 import RecipeForm from "./RecipeForm"
 import RecipeManager from "./RecipeManager"
+import { DiscoveryStrip, PublicHeader, PublicHero, ThemeToggle } from "./PublicChrome"
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 const EMPTY: DayMeals = { breakfast: "", morning_break: "", lunch: "", evening_break: "", supper: "" }
@@ -32,13 +33,15 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
   const [mealDetail, setMealDetail] = useState<{ name: string; slot: string } | null>(null)
   const [foodDetail, setFoodDetail] = useState<FoodItem | null>(null)
   const [showRecipe, setShowRecipe] = useState(false)
+  const [budgetFilter, setBudgetFilter] = useState<"all" | "budget">("all")
   const user = useSelector((state: RootState) => state.auth.user)
 
   const plansQuery = useGetPlansQuery(mode === "professional" ? "mine" : "all")
   const catalogQuery = useGetCatalogQuery()
   const [saveDayMutation, saveState] = useSaveDayMutation()
   const [deleteDayMutation, deleteState] = useDeleteDayMutation()
-  const plans = plansQuery.data || (plansQuery.isError ? demoPlans : [])
+  const allPlans = plansQuery.data || (plansQuery.isError ? demoPlans : [])
+  const plans = mode === "public" && budgetFilter === "budget" ? allPlans.filter(item => item.budgetLevel === "budget") : allPlans
   const catalog = catalogQuery.data || { categories: [], subcategories: [], foodItems: [], mealTypes: [], mealSlots: [], assignments: [], recipes: [], countries: [] }
   const offline = plansQuery.isError
   const catalogOffline = catalogQuery.isError
@@ -89,41 +92,43 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
     }
   }
 
-  return <div className="app-shell">
-    <aside className="sidebar">
+  return <div className={`app-shell mode-${mode}`}>
+    {mode === "public" && <PublicHeader/>}
+    {mode !== "public" && <aside className="sidebar">
       <a className="brand" href="#top" aria-label="Plateful home"><span className="brand-mark">P</span><span>plateful</span></a>
       <nav>
         <a className="nav-item active" href="#planner"><span>▦</span>{mode === "professional" ? "My meal plans" : "Meal planner"}</a>
         {mode !== "professional" && <a className="nav-item" href="#library"><span>♧</span>Food library</a>}
         {mode !== "professional" && <a className="nav-item" href="#countries"><span>◎</span>Countries</a>}
-        {mode !== "public" && <a className="nav-item" href="#recipes"><span>♨</span>{mode === "professional" ? "My recipes" : "Recipes"}</a>}
+        <a className="nav-item" href="#recipes"><span>♨</span>{mode === "professional" ? "My recipes" : "Recipes"}</a>
         <a className="nav-item" href="/api-docs" target="_blank"><span>↗</span>API docs</a>
         {mode === "admin" && <a className="nav-item" href="#admin"><span>⚙</span>Administration</a>}
-        {mode !== "public" && <a className="nav-item" href="/"><span>⌂</span>Public site</a>}
+        <a className="nav-item" href="/"><span>⌂</span>Public site</a>
       </nav>
       <div className="sidebar-note">
         <span className="eyebrow">A small reminder</span>
         <p>Good food doesn’t need to be complicated. Plan simply, eat well.</p>
       </div>
       <div className="profile"><div className="avatar">MP</div><div><strong>Meal planner</strong><span>{offline ? "Demo workspace" : "Connected workspace"}</span></div></div>
-    </aside>
+    </aside>}
 
     <main id="top">
-      <header className="topbar">
+      {mode === "public" && <PublicHero plans={allPlans.length} foods={catalog.foodItems.length}/>}
+      {mode !== "public" && <header className="topbar">
         <div><span className="eyebrow">{mode === "admin" ? "Administration workspace" : mode === "professional" ? "Professional workspace" : "Your weekly rhythm"}</span><h1>{mode === "professional" ? "My meal plans" : mode === "admin" ? "Admin dashboard" : "Meal planner"}</h1></div>
-        <div className="header-actions"><button className="secondary print-button" onClick={() => window.print()}>↧ Print plan</button>{canCreatePlans&&<button className="secondary" onClick={()=>setShowRecipe(true)}>＋ Recipe</button>}{canCreatePlans && <button className="primary" onClick={() => setShowNewPlan(true)} disabled={offline}>＋ New plan</button>}<AccountButton/></div>
-      </header>
+        <div className="header-actions"><ThemeToggle/><button className="secondary print-button" onClick={() => window.print()}>↧ Print plan</button>{canCreatePlans&&<button className="secondary" onClick={()=>setShowRecipe(true)}>＋ Recipe</button>}{canCreatePlans && <button className="primary" onClick={() => setShowNewPlan(true)} disabled={offline}>＋ New plan</button>}<AccountButton/></div>
+      </header>}
 
       {offline && <div className="notice"><span>Preview mode</span> The API is unavailable, so you’re seeing sample meals. Start the backend to create and edit plans.</div>}
 
-      <section className="hero" id="insights">
+      {mode !== "public" && <section className="hero" id="insights">
         <div><span className="eyebrow">{plan?.planGoal?.replace(/_/g, " ") || "Balanced plan"}</span><h2>{filled === 7 ? "Your week is beautifully planned." : `${7 - filled} days are waiting for you.`}</h2><p>{plan?.description || `${filled * 5} meals planned across ${filled} of 7 days. A little preparation now makes the whole week lighter.`}</p></div>
         <div className="progress-wrap"><div className="progress-ring" style={{ "--progress": `${filled / 7 * 360}deg` } as React.CSSProperties}><div><strong>{filled}/7</strong><span>days</span></div></div></div>
-      </section>
+      </section>}
 
       <section className="planner" id="planner">
         <div className="section-heading">
-          <div><span className="eyebrow">Plan at a glance</span><h2>Weekly table</h2></div>
+          <div><span className="eyebrow">Plan at a glance</span><h2>{mode === "public" ? "Find your next week" : "Weekly table"}</h2>{mode === "public" && <div className="plan-tabs"><button className={budgetFilter === "all" ? "active" : ""} onClick={() => setBudgetFilter("all")}>All plans</button><button className={budgetFilter === "budget" ? "active" : ""} onClick={() => setBudgetFilter("budget")}>Budget-friendly</button></div>}</div>
           <div className="plan-control"><label htmlFor="plan">Meal plan</label><select id="plan" value={selectedKey} onChange={e => setSelectedKey(e.target.value)} disabled={loading}>{plans.map(item => <option key={item.mealplankey}>{item.mealplankey}</option>)}</select></div>
         </div>
 
@@ -139,6 +144,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
         <p className="table-hint">Select a day or meal to add and edit the full day.</p>
       </section>
 
+      {mode === "public" && <DiscoveryStrip catalog={catalog}/>}
       {mode !== "professional" && <div id="library"><CatalogView catalog={catalog} offline={catalogOffline || mode !== "admin"} onFood={setFoodDetail} notify={(kind, message) => setToast({ kind, message })} /></div>}
       {mode !== "professional" && <CountryExplorer catalog={catalog} onFood={setFoodDetail}/>}
       {mode !== "public" && <RecipeManager catalog={catalog} notify={(kind, message) => setToast({ kind, message })}/>}
@@ -173,11 +179,14 @@ function NewPlanModal({ close, done, fail }: { close: () => void; done: (name: s
   const [name, setName] = useState("")
   const [planGoal, setPlanGoal] = useState("balanced")
   const [description, setDescription] = useState("")
+  const [budgetLevel, setBudgetLevel] = useState("standard")
+  const [estimatedCost, setEstimatedCost] = useState("")
+  const [currency, setCurrency] = useState("KES")
   const [createInterval, { isLoading: busy }] = useCreateIntervalMutation()
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    try { await createInterval({ mealPlanName: name.trim(), planGoal, description }).unwrap(); done(name.trim()) }
+    try { await createInterval({ mealPlanName: name.trim(), planGoal, description, budgetLevel, estimatedCost: estimatedCost ? Number(estimatedCost) : undefined, currency }).unwrap(); done(name.trim()) }
     catch (error) { fail(error instanceof Error ? error.message : "Could not create the plan.") }
   }
-  return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && close()}><form className="modal compact" onSubmit={submit}><button className="close" type="button" onClick={close}>×</button><span className="eyebrow">A fresh start</span><h2>New meal plan</h2><p className="modal-copy">Describe the purpose so people understand how to use it.</p><div className="stack-fields"><label><span>Plan name</span><input autoFocus required minLength={3} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. September · Week 2" /></label><label><span>Goal</span><select value={planGoal} onChange={e=>setPlanGoal(e.target.value)}><option value="weight_loss">Weight loss</option><option value="weight_gain">Weight gain</option><option value="balanced">Balanced</option><option value="performance">Performance</option><option value="medical">Specialised</option></select></label><label><span>Description</span><textarea required value={description} onChange={e=>setDescription(e.target.value)} placeholder="Who this plan is for and how it works…"/></label></div><div className="modal-actions"><span /><button className="secondary" type="button" onClick={close}>Cancel</button><button className="primary" disabled={busy}>{busy ? "Creating…" : "Create plan"}</button></div></form></div>
+  return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && close()}><form className="modal compact" onSubmit={submit}><button className="close" type="button" onClick={close}>×</button><span className="eyebrow">A fresh start</span><h2>New meal plan</h2><p className="modal-copy">Describe the purpose so people understand how to use it.</p><div className="stack-fields"><label><span>Plan name</span><input autoFocus required minLength={3} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. September · Week 2" /></label><label><span>Goal</span><select value={planGoal} onChange={e=>setPlanGoal(e.target.value)}><option value="weight_loss">Weight loss</option><option value="weight_gain">Weight gain</option><option value="balanced">Balanced</option><option value="performance">Performance</option><option value="medical">Specialised</option></select></label><label><span>Budget</span><select value={budgetLevel} onChange={e=>setBudgetLevel(e.target.value)}><option value="budget">Budget-friendly</option><option value="standard">Standard</option><option value="premium">Premium</option></select></label><label><span>Estimated total cost</span><div className="cost-input"><select value={currency} onChange={e=>setCurrency(e.target.value)}><option>KES</option><option>USD</option><option>EUR</option><option>GBP</option></select><input type="number" min="0" step="0.01" value={estimatedCost} onChange={e=>setEstimatedCost(e.target.value)} placeholder="Optional"/></div></label><label><span>Description</span><textarea required value={description} onChange={e=>setDescription(e.target.value)} placeholder="Who this plan is for and how it works…"/></label></div><div className="modal-actions"><span /><button className="secondary" type="button" onClick={close}>Cancel</button><button className="primary" disabled={busy}>{busy ? "Creating…" : "Create plan"}</button></div></form></div>
 }

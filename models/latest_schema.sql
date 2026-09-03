@@ -342,6 +342,12 @@ CREATE TABLE `mealplantime` (
   `idmealPlanWeek` int NOT NULL AUTO_INCREMENT,
   `meal_plan_name` varchar(45) NOT NULL,
   `owner_user_id` int DEFAULT NULL,
+  `plan_goal` varchar(45) NOT NULL DEFAULT 'balanced',
+  `description` text,
+  `budget_level` varchar(20) NOT NULL DEFAULT 'standard',
+  `estimated_cost` decimal(10,2) DEFAULT NULL,
+  `currency` varchar(3) NOT NULL DEFAULT 'KES',
+  `image_url` text,
   `created_on` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`idmealPlanWeek`),
@@ -417,6 +423,7 @@ CREATE TABLE `mealtype` (
   `idtable1` int NOT NULL AUTO_INCREMENT,
   `meal_name` varchar(255) NOT NULL,
   `mealTypesID` varchar(36) NOT NULL,
+  `image_url` text,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`idtable1`),
@@ -431,7 +438,7 @@ CREATE TABLE `mealtype` (
 
 LOCK TABLES `mealtype` WRITE;
 /*!40000 ALTER TABLE `mealtype` DISABLE KEYS */;
-INSERT INTO `mealtype` VALUES (1,'Githeri Waru maharagwe','38aa5319-8928-11ee-9841-288023d737ea','2023-11-23 18:31:51','2023-11-23 18:31:51'),(2,'githeri with water','13da8d8e-892c-11ee-9841-288023d737ea','2023-11-23 18:31:51','2023-11-23 18:31:51'),(4,'mchele Njeri','bf27f3a5-8935-11ee-9841-288023d737ea','2023-11-23 18:31:51','2023-11-23 18:31:51'),(5,'tea','d05e5454-8980-11ee-9841-288023d737ea','2023-11-23 18:31:51','2023-11-23 18:31:51');
+INSERT INTO `mealtype` (`idtable1`,`meal_name`,`mealTypesID`,`image_url`,`created_at`,`updated_at`) VALUES (1,'Githeri Waru maharagwe','38aa5319-8928-11ee-9841-288023d737ea',NULL,'2023-11-23 18:31:51','2023-11-23 18:31:51'),(2,'githeri with water','13da8d8e-892c-11ee-9841-288023d737ea',NULL,'2023-11-23 18:31:51','2023-11-23 18:31:51'),(4,'mchele Njeri','bf27f3a5-8935-11ee-9841-288023d737ea',NULL,'2023-11-23 18:31:51','2023-11-23 18:31:51'),(5,'tea','d05e5454-8980-11ee-9841-288023d737ea',NULL,'2023-11-23 18:31:51','2023-11-23 18:31:51');
 /*!40000 ALTER TABLE `mealtype` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -476,6 +483,10 @@ CREATE TABLE `recipe` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `meal_typeID` varchar(36) DEFAULT NULL,
+  `owner_user_id` int DEFAULT NULL,
+  `video_url` text,
+  `base_recipe_id` varchar(36) DEFAULT NULL,
+  `image_url` text,
   PRIMARY KEY (`idrecipe`),
   UNIQUE KEY `recipe_ID_UNIQUE` (`recipe_ID`),
   KEY `recipesToMealTypeId_idx` (`meal_typeID`),

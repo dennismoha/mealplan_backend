@@ -1,4 +1,4 @@
-import type { Catalog, FoodItem, Recipe } from "./api"
+import type { Catalog, FoodItem, Recipe } from "../api"
 import { FoodImage } from "./CatalogView"
 
 const lines = (value?: string) => (value || "").split(/\r?\n|,|;/).map(v => v.replace(/^\s*[-•\d.)]+\s*/, "").trim()).filter(Boolean)

@@ -1,12 +1,20 @@
-const { Country, FoodItem, MealType, Recipe, FoodNutrition } = require('../../models/orm');
+const prisma = require('../../models/prisma');
 
-exports.list = async (req, res) => res.json({ countries: await Country.findAll({ order: [['name', 'ASC']], raw: true }) });
+exports.list = async (req, res) => res.json({ countries: await prisma.countries.findMany({ orderBy: { name: 'asc' } }) });
 exports.get = async (req, res) => {
-  const country = await Country.findByPk(req.params.id, { include: [{ model: FoodItem, as: 'foodItems', through: { attributes: [] }, include: [{ model: FoodNutrition, as: 'nutrition' }] }, { model: MealType, as: 'mealTypes', through: { attributes: [] }, include: [{ model: Recipe, as: 'recipes' }] }] });
+  const id = Number(req.params.id);
+  const country = await prisma.countries.findUnique({ where: { id } });
+  if (country) {
+    const [foodLinks, mealLinks] = await Promise.all([prisma.food_item_countries.findMany({ where: { country_id: id } }), prisma.meal_type_countries.findMany({ where: { country_id: id } })]);
+    country.foodItems = await prisma.fooditems.findMany({ where: { food_itemID: { in: foodLinks.map(link => link.food_item_id) } } });
+    const nutrition = await prisma.food_nutrition.findMany({ where: { food_item_id: { in: country.foodItems.map(food => food.food_itemID) } } });
+    country.foodItems = country.foodItems.map(food => ({ ...food, nutrition: nutrition.find(item => item.food_item_id === food.food_itemID) || null }));
+    country.mealTypes = (await prisma.mealtype.findMany({ where: { mealTypesID: { in: mealLinks.map(link => link.meal_type_id) } }, include: { recipe: true } })).map(({ recipe, ...meal }) => ({ ...meal, recipes: recipe }));
+  }
   return country ? res.json({ country }) : res.sendStatus(404);
 };
-exports.create = async (req, res) => res.status(201).json({ country: await Country.create(req.body) });
-exports.update = async (req, res) => { await Country.update(req.body, { where: { id: req.params.id } }); res.json({ country: await Country.findByPk(req.params.id) }); };
-exports.remove = async (req, res) => { await Country.destroy({ where: { id: req.params.id } }); res.sendStatus(204); };
-exports.linkFood = async (req, res) => { const country = await Country.findByPk(req.params.id); await country.addFoodItem(req.body.foodItemId); res.json({ success: true }); };
-exports.linkMeal = async (req, res) => { const country = await Country.findByPk(req.params.id); await country.addMealType(req.body.mealTypeId); res.json({ success: true }); };
+exports.create = async (req, res) => res.status(201).json({ country: await prisma.countries.create({ data: req.body }) });
+exports.update = async (req, res) => res.json({ country: await prisma.countries.update({ data: req.body, where: { id: Number(req.params.id) } }) });
+exports.remove = async (req, res) => { await prisma.countries.delete({ where: { id: Number(req.params.id) } }); res.sendStatus(204); };
+exports.linkFood = async (req, res) => { await prisma.food_item_countries.create({ data: { country_id: Number(req.params.id), food_item_id: req.body.foodItemId } }); res.json({ success: true }); };
+exports.linkMeal = async (req, res) => { await prisma.meal_type_countries.create({ data: { country_id: Number(req.params.id), meal_type_id: req.body.mealTypeId } }); res.json({ success: true }); };

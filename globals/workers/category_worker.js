@@ -1,11 +1,11 @@
 const foodCategory = require('../services/db/food_category_db');
 
 class CategoryWorker {
-  addCategoryToDb(job, done) {
+  async addCategoryToDb(job, done) {
     console.log('on production adding category to db')
     try {
       console.log('jobqueue', 'done ');
-      foodCategory.addFoodCategoryToDB(job.data);
+      await foodCategory.addFoodCategoryToDB(job.data);
       done(null, job.data);
     } catch (error) {
       console.log('error is ', error);
@@ -14,10 +14,10 @@ class CategoryWorker {
   }
 
   // UPDATE CATEGORY
-  updateCategoryInDb(job, done) {
+  async updateCategoryInDb(job, done) {
     try {
       console.log('jobqueue', 'done ', job.data);
-      foodCategory.updateCategoryInDB(job.data);
+      await foodCategory.updateCategoryInDB(job.data);
       done(null, job.data);
     } catch (error) {
       console.log('error is ', error);
@@ -26,10 +26,10 @@ class CategoryWorker {
   }
 
   // DELETE CATEGORY
-  deleteCategoryInDb(job, done) {
+  async deleteCategoryInDb(job, done) {
     try {
       console.log('jobqueue', 'done ', job.data);
-      foodCategory.deleteFoodCategory(job.data);
+      await foodCategory.deleteFoodCategory(job.data);
       done(null, job.data);
     } catch (error) {
       console.log('error is ', error);

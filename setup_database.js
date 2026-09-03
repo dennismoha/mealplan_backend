@@ -1,14 +1,13 @@
-const { sequelize } = require('./models/orm');
+const prisma = require('./models/prisma');
 const { redisConnection } = require('./globals/services/redis/redis.connection');
-const { bootstrapIdentityData, ensureOwnershipSchema, ensureFoodCultureSchema } = require('./models/orm/bootstrap');
+const { bootstrapIdentityData, seedReferenceCountries } = require('./models/bootstrap');
 
 // Function to check database connection
 async function checkDatabaseConnection() {
   try {
-    await sequelize.authenticate();
+    await prisma.$queryRaw`SELECT 1`;
     console.log('MySQL database is reachable.');
-    await ensureOwnershipSchema();
-    await ensureFoodCultureSchema();
+    await seedReferenceCountries();
     const admin = await bootstrapIdentityData();
     if (admin.created) console.log('Initial administrator account created.');
 
@@ -20,11 +19,13 @@ async function checkDatabaseConnection() {
   } catch (error) {
     console.error('Error connecting to the database:', error);
     process.exit(1); // Exit the application if connection fails
-  }
+  } finally {
+      await prisma.$disconnect(); // Disconnect Prisma Client
+    }
 }
 
 async function closeDatabaseConnection() {
-  await sequelize.close();
+  await prisma.$disconnect();
   console.log('database pool connection closed success');
   return;
 }

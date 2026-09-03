@@ -1,9 +1,19 @@
 openapi: 3.0.0
 info:
-  title: meal plan api
-  description: This is a API documentation for the mealplan app
-  version: 1.0.0
+  title: Meal Plan API
+  description: API for meal planning, food discovery, recipes, countries, nutrition, and role-based workspaces.
+  version: 1.1.0
 tags:
+  - name: authentication
+    description: Registration, sessions, and account access
+  - name: administration
+    description: Administrator-only user and access management
+  - name: catalog
+    description: Aggregate read model used by the public and authenticated interfaces
+  - name: countries
+    description: Countries and their food-item and meal-type relationships
+  - name: recipes
+    description: Reusable and user-owned recipes
   - name: meal-plan
     description: mealplan
   - name: meal plan time interval
@@ -1005,6 +1015,472 @@ paths:
                     type: string
                     example: "Food item not found"
  
+  /meal/meal-plan/mine:
+    get:
+      tags: [meal-plan]
+      summary: List meal plans owned by the signed-in professional
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Owned meal plans grouped by plan interval
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meals:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MealPlanView'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /catalog/:
+    get:
+      tags: [catalog]
+      summary: Retrieve the complete public food catalog
+      description: Returns categories, subcategories, food items with nutrition and countries, meal types, meal slots, assignments, recipes, and countries in one response.
+      responses:
+        '200':
+          description: Catalog retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogResponse'
+
+  /countries/:
+    get:
+      tags: [countries]
+      summary: List countries
+      responses:
+        '200':
+          description: Countries ordered by name
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  countries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Country'
+    post:
+      tags: [countries]
+      summary: Create a country
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CountryInput'
+      responses:
+        '201':
+          description: Country created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  country:
+                    $ref: '#/components/schemas/Country'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /countries/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CountryId'
+    get:
+      tags: [countries]
+      summary: Get a country with its foods, nutrition, meals, and recipes
+      responses:
+        '200':
+          description: Country details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  country:
+                    $ref: '#/components/schemas/CountryDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [countries]
+      summary: Update a country
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CountryInput'
+      responses:
+        '200':
+          description: Country updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  country:
+                    $ref: '#/components/schemas/Country'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    delete:
+      tags: [countries]
+      summary: Delete a country
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Country deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /countries/{id}/foods:
+    post:
+      tags: [countries]
+      summary: Link a food item to a country
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CountryId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [foodItemId]
+              properties:
+                foodItemId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          $ref: '#/components/responses/LinkCreated'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /countries/{id}/meals:
+    post:
+      tags: [countries]
+      summary: Link a meal type to a country
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CountryId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mealTypeId]
+              properties:
+                mealTypeId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          $ref: '#/components/responses/LinkCreated'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /recipes/:
+    get:
+      tags: [recipes]
+      summary: List recipes and their normalized food items
+      responses:
+        '200':
+          description: Recipes ordered by title
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recipes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Recipe'
+    post:
+      tags: [recipes]
+      summary: Create an owned recipe
+      description: Available to professionals and administrators. Ownership is assigned from the access token.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeInput'
+      responses:
+        '201':
+          description: Recipe created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recipe:
+                    $ref: '#/components/schemas/Recipe'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /recipes/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Numeric recipe primary key
+        schema:
+          type: integer
+    put:
+      tags: [recipes]
+      summary: Update a recipe
+      description: Professionals may update only their own recipes; administrators may update any recipe.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeInput'
+      responses:
+        '200':
+          description: Recipe updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recipe:
+                    $ref: '#/components/schemas/Recipe'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [recipes]
+      summary: Delete a recipe
+      description: Professionals may delete only their own recipes; administrators may delete any recipe.
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Recipe deleted
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /user/register:
+    servers:
+      - url: /
+    post:
+      tags: [authentication]
+      summary: Register a member account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Account created; also sets an HTTP-only refresh-token cookie
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '409':
+          description: An account with the email already exists
+
+  /user/login/:
+    servers:
+      - url: /
+    post:
+      tags: [authentication]
+      summary: Sign in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Signed in; also sets an HTTP-only refresh-token cookie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '401':
+          description: Email or password is incorrect
+        '403':
+          description: Account is revoked
+
+  /user/me:
+    servers:
+      - url: /
+    get:
+      tags: [authentication]
+      summary: Return the current access-token user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /user/token/refresh:
+    servers:
+      - url: /
+    get:
+      tags: [authentication]
+      summary: Exchange the HTTP-only refresh cookie for an access token
+      security:
+        - refreshCookie: []
+      responses:
+        '200':
+          description: Session refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '401':
+          description: Refresh cookie is missing
+        '403':
+          description: Refresh token is invalid, expired, revoked, or no longer stored
+
+  /user/logout:
+    servers:
+      - url: /
+    get:
+      tags: [authentication]
+      summary: Sign out and clear the refresh-token cookie
+      security:
+        - refreshCookie: []
+      responses:
+        '204':
+          description: Signed out
+
+  /user/admin/users:
+    servers:
+      - url: /
+    get:
+      tags: [administration]
+      summary: List user accounts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User accounts ordered by creation date
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [administration]
+      summary: Create a user with an assigned role
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCreateUserRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: User already exists
+
+  /user/admin/users/{id}:
+    servers:
+      - url: /
+    patch:
+      tags: [administration]
+      summary: Change a user's role or account status
+      description: Revoking an account also invalidates its stored refresh token.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserAccessRequest'
+      responses:
+        '200':
+          description: Account updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   # /meal/meal-plan/{mealplankey}/{day}:
   #   put:
   #     tags:
@@ -1022,7 +1498,443 @@ paths:
   #         200:
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: One-hour access token returned by registration, login, or refresh.
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: jwt
+      description: HTTP-only seven-day refresh-token cookie managed by the server.
+  parameters:
+    CountryId:
+      name: id
+      in: path
+      required: true
+      description: Numeric country identifier
+      schema:
+        type: integer
+  responses:
+    Unauthorized:
+      description: Missing or invalid access token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Message'
+    Forbidden:
+      description: The signed-in user does not have the required role or ownership
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Message'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Message'
+    LinkCreated:
+      description: Relationship created
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [success]
+            properties:
+              success:
+                type: boolean
+                example: true
   schemas:
+    Message:
+      type: object
+      properties:
+        message:
+          type: string
+    User:
+      type: object
+      required: [id, email, role, status]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [user, professional, admin]
+        status:
+          type: string
+          enum: [active, revoked]
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+    Session:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+          description: Bearer access token
+        user:
+          $ref: '#/components/schemas/User'
+    LoginRequest:
+      type: object
+      required: [userEmail, password]
+      properties:
+        userEmail:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 6
+    RegisterRequest:
+      allOf:
+        - $ref: '#/components/schemas/LoginRequest'
+        - type: object
+          required: [confirm_password]
+          properties:
+            confirm_password:
+              type: string
+              format: password
+              minLength: 6
+    AdminCreateUserRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 6
+        role:
+          type: string
+          enum: [user, professional, admin]
+          default: user
+    UpdateUserAccessRequest:
+      type: object
+      minProperties: 1
+      properties:
+        role:
+          type: string
+          enum: [user, professional, admin]
+        status:
+          type: string
+          enum: [active, revoked]
+    CountryInput:
+      type: object
+      required: [name, code]
+      properties:
+        name:
+          type: string
+          example: Kenya
+        code:
+          type: string
+          minLength: 2
+          maxLength: 3
+          example: KEN
+        description:
+          type: string
+          nullable: true
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+    Country:
+      allOf:
+        - $ref: '#/components/schemas/CountryInput'
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: integer
+            created_at:
+              type: string
+              format: date-time
+              nullable: true
+            updated_at:
+              type: string
+              format: date-time
+              nullable: true
+    Nutrition:
+      type: object
+      properties:
+        serving_size_g:
+          type: number
+          format: double
+        energy_kcal:
+          type: number
+          format: double
+        protein_g:
+          type: number
+          format: double
+        carbohydrates_g:
+          type: number
+          format: double
+        fat_g:
+          type: number
+          format: double
+        fiber_g:
+          type: number
+          format: double
+        source:
+          type: string
+          nullable: true
+    CatalogFoodItem:
+      type: object
+      properties:
+        idFoodItems:
+          type: integer
+        food_itemID:
+          type: string
+          format: uuid
+        food_name:
+          type: string
+        descriptionl:
+          type: string
+          nullable: true
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+        category_id:
+          type: string
+          format: uuid
+          nullable: true
+        foodsubcategory_id:
+          type: string
+          format: uuid
+        countries:
+          type: array
+          items:
+            $ref: '#/components/schemas/Country'
+        nutrition:
+          allOf:
+            - $ref: '#/components/schemas/Nutrition'
+          nullable: true
+    MealType:
+      type: object
+      properties:
+        idtable1:
+          type: integer
+        mealTypesID:
+          type: string
+          format: uuid
+        meal_name:
+          type: string
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+        countries:
+          type: array
+          items:
+            $ref: '#/components/schemas/Country'
+    RecipeFoodLink:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Food item UUID
+        quantity:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+    RecipeInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        ingredients:
+          type: string
+          nullable: true
+        instructions:
+          type: string
+          nullable: true
+        prep_time:
+          type: integer
+          minimum: 0
+        cook_time:
+          type: integer
+          minimum: 0
+        total_time:
+          type: integer
+          minimum: 0
+        servings:
+          type: integer
+          minimum: 1
+        cuisine:
+          type: string
+          nullable: true
+        difficulty:
+          type: string
+          nullable: true
+        meal_typeID:
+          type: string
+          format: uuid
+          nullable: true
+        video_url:
+          type: string
+          format: uri
+          nullable: true
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+        base_recipe_id:
+          type: string
+          format: uuid
+          nullable: true
+        foodItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeFoodLink'
+    Recipe:
+      allOf:
+        - $ref: '#/components/schemas/RecipeInput'
+        - type: object
+          properties:
+            idrecipe:
+              type: integer
+            recipe_ID:
+              type: string
+              format: uuid
+            owner_user_id:
+              type: integer
+              nullable: true
+            foodItems:
+              type: array
+              items:
+                $ref: '#/components/schemas/CatalogFoodItem'
+    CountryDetail:
+      allOf:
+        - $ref: '#/components/schemas/Country'
+        - type: object
+          properties:
+            foodItems:
+              type: array
+              items:
+                $ref: '#/components/schemas/CatalogFoodItem'
+            mealTypes:
+              type: array
+              items:
+                $ref: '#/components/schemas/MealType'
+    MealPlanView:
+      type: object
+      properties:
+        mealplankey:
+          type: string
+        idmealPlanWeek:
+          type: integer
+        ownerUserId:
+          type: integer
+          nullable: true
+        planGoal:
+          type: string
+          enum: [weight_loss, weight_gain, balanced, performance, medical]
+        description:
+          type: string
+          nullable: true
+        budgetLevel:
+          type: string
+          enum: [budget, standard, premium]
+        estimatedCost:
+          type: number
+          format: double
+          nullable: true
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        imageUrl:
+          type: string
+          format: uri
+          nullable: true
+        data:
+          type: object
+          properties:
+            daysOfWeek:
+              type: object
+              additionalProperties:
+                $ref: '#/components/schemas/DayMeals'
+    DayMeals:
+      type: object
+      properties:
+        breakfast:
+          type: string
+        morning_break:
+          type: string
+        lunch:
+          type: string
+        evening_break:
+          type: string
+        supper:
+          type: string
+    CatalogResponse:
+      type: object
+      required: [statusCode, data, status]
+      properties:
+        statusCode:
+          type: integer
+          example: 200
+        data:
+          type: object
+          properties:
+            categories:
+              type: array
+              items:
+                $ref: '#/components/schemas/FoodCategory'
+            subcategories:
+              type: array
+              items:
+                $ref: '#/components/schemas/FoodSubcategory'
+            foodItems:
+              type: array
+              items:
+                $ref: '#/components/schemas/CatalogFoodItem'
+            mealTypes:
+              type: array
+              items:
+                $ref: '#/components/schemas/MealType'
+            mealSlots:
+              type: array
+              items:
+                type: object
+                properties:
+                  mealName:
+                    type: string
+                  mealID:
+                    type: string
+                    format: uuid
+            assignments:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+            recipes:
+              type: array
+              items:
+                $ref: '#/components/schemas/Recipe'
+            countries:
+              type: array
+              items:
+                $ref: '#/components/schemas/Country'
+        status:
+          type: string
     Meal-Plan-time-interval:
       type: object
       properties:
@@ -1040,12 +1952,63 @@ components:
           type: string
           format: date-time
           example: "2023-11-23T14:45:33.000Z"
+        owner_user_id:
+          type: integer
+          nullable: true
+        plan_goal:
+          type: string
+          enum: [weight_loss, weight_gain, balanced, performance, medical]
+        description:
+          type: string
+          nullable: true
+        budget_level:
+          type: string
+          enum: [budget, standard, premium]
+        estimated_cost:
+          type: number
+          format: double
+          nullable: true
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          example: KES
+        image_url:
+          type: string
+          format: uri
+          nullable: true
     New-Meal-Plan-time-interval:
       type: object
+      required: [mealPlanName]
       properties:        
         mealPlanName:
           type: string
           example: "september week 1"
+        planGoal:
+          type: string
+          enum: [weight_loss, weight_gain, balanced, performance, medical]
+          default: balanced
+        description:
+          type: string
+          nullable: true
+        budgetLevel:
+          type: string
+          enum: [budget, standard, premium]
+          default: standard
+        estimatedCost:
+          type: number
+          format: double
+          minimum: 0
+          nullable: true
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          default: KES
+        imageUrl:
+          type: string
+          format: uri
+          nullable: true
         
     updateMealPlan:
       type: object
@@ -1189,15 +2152,30 @@ components:
     FoodItem:
       type: object
       properties:
-        id:
+        idFoodItems:
+          type: integer
+        food_itemID:
           type: string
+          format: uuid
           example: "123e4567-e89b-12d3-a456-426614174000"
         food_name:
           type: string
-          example: "Pizza"
+          example: "Maize"
+        descriptionl:
+          type: string
+          nullable: true
+        image_url:
+          type: string
+          format: uri
+          nullable: true
         category_id:
-          type: integer
-          example: 1
+          type: string
+          format: uuid
+          nullable: true
+        foodsubcategory_id:
+          type: string
+          format: uuid
+          nullable: true
 
     Error:
             type: object
@@ -1209,4 +2187,3 @@ components:
                     type: string
                   message:
                     type: string
-

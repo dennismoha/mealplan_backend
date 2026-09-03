@@ -21,7 +21,7 @@ const {
   DELETEFOODITEMQUEUE,
 } = require("#mealplan/constants.js");
 const foodItemDB = require("#mealplan/globals/services/db/food_item_db.js");
-const { FoodItem } = require("#mealplan/models/orm/index.js");
+const prisma = require("#mealplan/models/prisma.js");
 const { upload } = require("#mealplan/config/cloudinary_upload.js");
 
 // Create a new food item
@@ -30,7 +30,7 @@ exports.createFoodItem = async (req, res) => {
   const { food_name } = req.body;
 
   // Check if the food item already exists
-  const existingFoodItem = await FoodItem.findAll({ where: { food_name } });
+  const existingFoodItem = await prisma.fooditems.findMany({ where: { food_name } });
 
   if (existingFoodItem.length > 0) {
     // Food item with the same name or ID already exists
@@ -146,11 +146,7 @@ exports.getFoodItemById = async (req, res) => {
 // Update a food item by ID
 exports.updateFoodItemById = async (req, res) => {
   // Check if the food item already exists
-  const existingFoodItem = await FoodItem.findAll({
-    attributes: ['food_name', 'category_id', 'fooditem_cacheID'],
-    where: { food_name: req.body.food_name },
-    raw: true
-  });
+  const existingFoodItem = await prisma.fooditems.findMany({ select: { food_name: true, category_id: true, fooditem_cacheID: true }, where: { food_name: req.body.food_name } });
 
   console.log("existing food item is ", existingFoodItem);
 

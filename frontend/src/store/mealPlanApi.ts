@@ -31,7 +31,7 @@ export const mealPlanApi = createApi({
         const plans = ((plansResult.data as { meals?: MealPlan[] }).meals || []).map(normalizePlan)
         const intervals = (intervalsResult.data as { data?: MealPlanInterval[] }).data || []
         const populated = new Set(plans.map(plan => plan.mealplankey))
-        const empty = intervals.filter(item => !populated.has(item.meal_plan_name)).map(item => ({ mealplankey: item.meal_plan_name, idmealPlanWeek: item.idmealPlanWeek, ownerUserId: item.owner_user_id, planGoal: item.plan_goal, description: item.description, data: { daysOfWeek: {} } }))
+        const empty = intervals.filter(item => !populated.has(item.meal_plan_name)).map(item => ({ mealplankey: item.meal_plan_name, idmealPlanWeek: item.idmealPlanWeek, ownerUserId: item.owner_user_id, planGoal: item.plan_goal, description: item.description, budgetLevel: item.budget_level, estimatedCost: item.estimated_cost, currency: item.currency, imageUrl: item.image_url, data: { daysOfWeek: {} } }))
         return { data: [...plans, ...empty] }
       },
       providesTags: ["Plans"],
@@ -41,7 +41,7 @@ export const mealPlanApi = createApi({
       transformResponse: (response: { data?: Catalog }) => response.data || emptyCatalog,
       providesTags: ["Catalog"],
     }),
-    createInterval: builder.mutation<unknown, { mealPlanName: string; planGoal: string; description: string }>({
+    createInterval: builder.mutation<unknown, { mealPlanName: string; planGoal: string; description: string; budgetLevel: string; estimatedCost?: number; currency: string }>({
       query: body => ({ url: "/meal/meal-plan/time-intervals/", method: "POST", body }),
       invalidatesTags: ["Plans"],
     }),
