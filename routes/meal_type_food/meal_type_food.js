@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const mealTypeFoodsController = require('../../controllers/mealTypeFoodsController');
+const mealTypeFoodsController = require('../../controller/meal_type_foods/meal_type_foods');
 const {
   createMealTypeFoodValidator,
   updateMealTypeFoodValidator,

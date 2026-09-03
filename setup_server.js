@@ -25,6 +25,7 @@ const usersRouter = require("./routes/auth/users_auth");
 const refreshTokenRouter = require("./routes/auth/refresh_token");
 const foodCategoryRouter = require("./routes/food_category/food_category_routes");
 const mealTypeRouter = require("./routes/meal_type");
+const mealTypeFoodRouter = require("./routes/meal_type_food/meal_type_food");
 const mealPlanRouter = require("./routes/meal_plan/meal_plan");
 const mealsRouter = require("./routes/meals/meals");
 const mealmealType = require("./routes/meal_mealtype/meal_mealtype");
@@ -32,6 +33,7 @@ const mealplanTimeRoutes = require("./routes/meal_plan_time/meal_plan_time");
 const foodItemRoutes = require("./routes/food_items/food_items");
 const foodVariationRoutes = require("./routes/food_variations/food_variations");
 const foodSubcategoryRoutes = require("./routes/food_sub_category/food_sub_category");
+const catalogRoutes = require("./routes/catalog/catalog");
 const errorHandler = require("./middlewares/custom_errors/error-handler");
 const dbHealth = require("./routes/health/health");
 
@@ -124,7 +126,7 @@ class MealPlanServer {
     app.use("/user/token", refreshTokenRouter);
 
     // Meal-related routes
-    app.use(`/${baseUrl}/meal/types`, mealTypeRouter);
+    app.use(`/${baseUrl}/meal/types`, mealTypeFoodRouter);
     app.use(`/${config.BASE_URL}/meal/meal-plan`, mealPlanRouter);
     app.use(`/${baseUrl}/meal/meals`, mealsRouter);
     app.use(`/${baseUrl}/meal/type`, mealTypeRouter); // Corrected from mealmealType to mealType
@@ -136,6 +138,7 @@ class MealPlanServer {
     app.use(`/${config.BASE_URL}/food/category`, foodCategoryRouter);
     // Use routes
     app.use(`/${config.BASE_URL}/foodsubcategories`, foodSubcategoryRoutes);
+    app.use(`/${config.BASE_URL}/catalog`, catalogRoutes);
 
     // Health route
     app.use("/health", dbHealth);

@@ -5,12 +5,12 @@ const query = new Query();
 class FoodItemDB {
   // add new food item to db
   async addFoodItemToDB(data) {
-    const { food_name, descriptionl, image_url, category_id, fooditem_cacheID } = data;
+    const { food_name, descriptionl, image_url, category_id, foodsubcategory_id, fooditem_cacheID } = data;
     console.log('data in services is ', data);
 
     const insertQuery =
-      'INSERT INTO fooditems (food_name, descriptionl, image_url, category_id, fooditem_cacheID) VALUES (?, ?, ?, ?,?)';
-    const insertParams = [food_name, descriptionl, image_url, category_id, fooditem_cacheID];
+      'INSERT INTO fooditems (food_name, descriptionl, image_url, category_id, foodsubcategory_id, fooditem_cacheID) VALUES (?, ?, ?, ?, ?, ?)';
+    const insertParams = [food_name, descriptionl, image_url, category_id, foodsubcategory_id || '', fooditem_cacheID];
 
     await query.insertNewRecord(insertQuery, insertParams);
 

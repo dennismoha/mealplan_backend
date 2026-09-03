@@ -1,0 +1,22 @@
+import type { Catalog, FoodItem, Recipe } from "./api"
+import { FoodImage } from "./CatalogView"
+
+const lines = (value?: string) => (value || "").split(/\r?\n|,|;/).map(v => v.replace(/^\s*[-•\d.)]+\s*/, "").trim()).filter(Boolean)
+
+export function MealDrawer({ name, slot, catalog, close, onFood }: { name: string; slot: string; catalog: Catalog; close: () => void; onFood: (food: FoodItem) => void }) {
+  const dish = catalog.mealTypes.find(m => m.meal_name.toLowerCase() === name.toLowerCase())
+  const recipe = catalog.recipes.find(r => r.meal_typeID === dish?.mealTypesID || r.title.toLowerCase() === name.toLowerCase())
+  const assignedSlots = dish ? catalog.assignments.filter(a => a.mealTypesID === dish.mealTypesID).map(a => a.mealName) : []
+  const ingredients = lines(recipe?.ingredients)
+  const relatedFoods = catalog.foodItems.filter(food => ingredients.some(ingredient => ingredient.toLowerCase().includes(food.food_name.toLowerCase())) || name.toLowerCase().includes(food.food_name.toLowerCase()))
+  return <div className="drawer-backdrop" onMouseDown={e => e.target === e.currentTarget && close()}><aside className="detail-drawer"><button className="close" onClick={close}>×</button><div className="dish-cover"><span>Today’s {slot}</span><strong>{name.slice(0,1)}</strong></div><div className="drawer-body"><span className="eyebrow">{recipe?.cuisine || "Home cooking"}</span><h2>{recipe?.title || name}</h2><p className="lead">{recipe?.description || "This meal is on your plan. Add a matching recipe to the database to include ingredients and instructions here."}</p>{assignedSlots.length > 0 && <div className="tag-row">{assignedSlots.map(s => <span key={s}>Good for {s}</span>)}</div>}<RecipeMeta recipe={recipe} />{ingredients.length > 0 && <section className="drawer-section"><h3>Ingredients</h3><ul className="ingredient-list">{ingredients.map((item,i) => <li key={i}><i />{item}</li>)}</ul></section>}{relatedFoods.length > 0 && <section className="drawer-section"><h3>From your food library</h3><div className="related-foods">{relatedFoods.map(food => <button key={food.food_itemID} onClick={() => onFood(food)}><span>{food.food_name.slice(0,1)}</span><div><strong>{food.food_name}</strong><small>View details →</small></div></button>)}</div></section>}{lines(recipe?.instructions).length > 0 && <section className="drawer-section"><h3>Method</h3><ol className="method-list">{lines(recipe?.instructions).map((step,i) => <li key={i}><span>{i+1}</span><p>{step}</p></li>)}</ol></section>}</div></aside></div>
+}
+
+function RecipeMeta({ recipe }: { recipe?: Recipe }) { if (!recipe) return null; const items = [{l:"Prep",v:recipe.prep_time && `${recipe.prep_time} min`},{l:"Cook",v:recipe.cook_time && `${recipe.cook_time} min`},{l:"Serves",v:recipe.servings},{l:"Level",v:recipe.difficulty}].filter(i => i.v); return items.length ? <div className="recipe-meta">{items.map(item => <div key={item.l}><span>{item.l}</span><strong>{item.v}</strong></div>)}</div> : null }
+
+export function FoodDrawer({ item, catalog, close }: { item: FoodItem; catalog: Catalog; close: () => void }) {
+  const category = catalog.categories.find(c => c.food_categoryID === item.category_id)
+  const subcategory = catalog.subcategories.find(s => s.foodsubcategory_id === item.foodsubcategory_id)
+  const usedIn = catalog.recipes.filter(recipe => (recipe.ingredients || "").toLowerCase().includes(item.food_name.toLowerCase()))
+  return <div className="drawer-backdrop" onMouseDown={e => e.target === e.currentTarget && close()}><aside className="detail-drawer food-detail"><button className="close" onClick={close}>×</button><FoodImage item={item}/><div className="drawer-body"><span className="eyebrow">{category?.category_name || "Food item"}{subcategory ? ` · ${subcategory.subcategory_name}` : ""}</span><h2>{item.food_name}</h2><p className="lead">{item.descriptionl || "No description has been added for this ingredient yet."}</p><div className="fact-card"><div><span>Category</span><strong>{category?.category_name || "Not assigned"}</strong></div><div><span>Subcategory</span><strong>{subcategory?.subcategory_name || "Not assigned"}</strong></div></div><section className="drawer-section"><h3>Appears in recipes</h3>{usedIn.length ? <div className="recipe-links">{usedIn.map(recipe => <div key={recipe.recipe_ID}><span>♨</span><div><strong>{recipe.title}</strong><small>{recipe.cuisine || "Recipe"}</small></div></div>)}</div> : <p className="muted">This ingredient hasn’t been referenced by a recipe yet.</p>}</section></div></aside></div>
+}

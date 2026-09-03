@@ -1,0 +1,21 @@
+@keyframes meal-planner-slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.meal-planner-drawer {
+  animation: meal-planner-slide-up 0.25s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meal-planner-drawer {
+    animation: none;
+  }
+}

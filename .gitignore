@@ -4,3 +4,7 @@ node_modules
 dump.rdb
 notes
 ssh/
+frontend/dist/
+frontend/*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts

@@ -11,6 +11,7 @@ class IndexQuery {
       console.log('results ', result);
       return result;
     } catch (error) {
+      console.log('db error is ', error);
       throw new DatabaseError('something happened');
     } finally {
       if (Connection) {
