@@ -129,6 +129,7 @@ class MealPlanServer {
 
     // Meal-related routes
     app.use(`/${baseUrl}/meal/types`, mealTypeFoodRouter);
+    app.use(`/${baseUrl}/meal-types`, mealTypeRouter);
     app.use(`/${config.BASE_URL}/meal/meal-plan`, mealPlanRouter);
     app.use(`/${baseUrl}/meal/meals`, mealsRouter);
     app.use(`/${baseUrl}/meal/type`, mealmealType);

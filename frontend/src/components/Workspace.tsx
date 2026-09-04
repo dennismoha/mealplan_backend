@@ -455,7 +455,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
           </div>
         )}
         {mode !== "professional" && (
-          <CountryExplorer catalog={catalog} onFood={setFoodDetail} />
+          <CountryExplorer catalog={catalog} onFood={setFoodDetail} canManage={mode === "admin"} offline={catalogOffline} notify={(kind, message) => setToast({ kind, message })} />
         )}
         {mode !== "public" && (
           <RecipeManager

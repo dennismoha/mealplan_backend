@@ -79,7 +79,12 @@ export type MealType = {
   idtable1: number;
   mealTypesID: string;
   meal_name: string;
+  local_name?: string;
+  description?: string;
   image_url?: string;
+  video_url?: string;
+  pronunciation_url?: string;
+  country_id?: number;
   countries?: Country[];
 };
 export type MealAssignment = {

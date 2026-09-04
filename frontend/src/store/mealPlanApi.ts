@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { Catalog, DayMeals, MealPlan, MealPlanInterval } from "../api";
+import type { Catalog, Country, DayMeals, MealPlan, MealPlanInterval } from "../api";
 
 const baseUrl = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 const emptyCatalog: Catalog = {
@@ -164,7 +164,7 @@ export const mealPlanApi = createApi({
       invalidatesTags: ["Catalog"],
     }),
     createMeal: builder.mutation<unknown, Record<string, unknown>>({
-      query: (body) => ({ url: "/meal/meals/meals", method: "POST", body }),
+      query: (body) => ({ url: "/meal-types/add", method: "POST", body }),
       invalidatesTags: ["Catalog"],
     }),
     updateRecipe: builder.mutation<
@@ -176,6 +176,18 @@ export const mealPlanApi = createApi({
     }),
     deleteRecipe: builder.mutation<void, number>({
       query: (id) => ({ url: `/recipes/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Catalog"],
+    }),
+    createCountry: builder.mutation<{ country: Country }, Omit<Country, "id">>({
+      query: (body) => ({ url: "/countries/", method: "POST", body }),
+      invalidatesTags: ["Catalog"],
+    }),
+    updateCountry: builder.mutation<{ country: Country }, { id: number; body: Omit<Country, "id"> }>({
+      query: ({ id, body }) => ({ url: `/countries/${id}`, method: "PUT", body }),
+      invalidatesTags: ["Catalog"],
+    }),
+    deleteCountry: builder.mutation<void, number>({
+      query: (id) => ({ url: `/countries/${id}`, method: "DELETE" }),
       invalidatesTags: ["Catalog"],
     }),
   }),
@@ -194,4 +206,7 @@ export const {
   useCreateMealMutation,
   useUpdateRecipeMutation,
   useDeleteRecipeMutation,
+  useCreateCountryMutation,
+  useUpdateCountryMutation,
+  useDeleteCountryMutation,
 } = mealPlanApi;

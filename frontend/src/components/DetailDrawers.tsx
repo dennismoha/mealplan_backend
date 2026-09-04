@@ -31,6 +31,7 @@ export function MealDrawer({
   );
   const recipe = catalog.recipes.find(
     (r) =>
+      r.meal_typeID === meal?.mealID ||
       (r.meal_typeID && assignedTypeIds.has(r.meal_typeID)) ||
       r.title.toLowerCase() === name.toLowerCase(),
   );

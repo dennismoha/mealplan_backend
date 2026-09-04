@@ -21,11 +21,11 @@ export default function MealForm({
 }) {
   const [name, setName] = useState("");
   const [localName, setLocalName] = useState("");
-  const [recipe, setRecipe] = useState("");
   const [primaryImage, setPrimaryImage] = useState("");
   const [imageUrls, setImageUrls] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [pronunciationUrl, setPronunciationUrl] = useState("");
+  const [countryId, setCountryId] = useState("");
   const [ingredients, setIngredients] = useState<
     Record<string, IngredientDraft>
   >({});
@@ -70,10 +70,10 @@ export default function MealForm({
       await createMeal({
         mealName: name.trim(),
         local_name: localName.trim() || undefined,
-        description: recipe.trim(),
         image_url: primaryImage.trim() || mealImages[0] || undefined,
         video_url: videoUrl.trim() || undefined,
         pronunciation_url: pronunciationUrl.trim() || undefined,
+        country_id: countryId ? Number(countryId) : undefined,
         foodItems,
         preparationSources: sources
           .filter((source) => source.source_url.trim())
@@ -139,15 +139,18 @@ export default function MealForm({
             </label>
           </div>
           <label>
-            <span>Written recipe / preparation method</span>
-            <textarea
-              required
-              minLength={10}
-              rows={5}
-              value={recipe}
-              onChange={(event) => setRecipe(event.target.value)}
-              placeholder="Write ingredients context and preparation steps…"
-            />
+            <span>Country of origin</span>
+            <select
+              value={countryId}
+              onChange={(event) => setCountryId(event.target.value)}
+            >
+              <option value="">Not specified</option>
+              {catalog.countries.map((country) => (
+                <option key={country.id} value={country.id}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
           </label>
           <fieldset>
             <legend>Food items involved</legend>
