@@ -11,6 +11,7 @@ const foodItemSelect = {
   image_url: true,
   video_url: true,
   pronunciation_url: true,
+  pronunciation_public_id: true,
   nutrient_description: true,
   food_itemID: true,
   category_id: true,

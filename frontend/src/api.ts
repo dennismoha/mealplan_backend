@@ -70,6 +70,7 @@ export type FoodItem = {
   food_name: string;
   english_name?: string;
   local_name?: string;
+  pronunciation_url?: string;
   descriptionl?: string;
   image_url?: string;
   category_id?: string;

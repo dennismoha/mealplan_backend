@@ -23,6 +23,26 @@ const foodItemDB = require("#mealplan/globals/services/db/food_item_db.js");
 const prisma = require("#mealplan/models/prisma.js");
 const { upload } = require("#mealplan/config/cloudinary_upload.js");
 
+// MediaRecorder commonly includes parameters such as `codecs=opus` in the
+// MIME type: data:audio/webm;codecs=opus;base64,...
+const isAudioDataUrl = value => (
+  typeof value === "string" &&
+  /^data:audio\/[a-z0-9.+-]+(?:;[^,;=]+=[^,;]+)*;base64,[a-z0-9+/=\s]+$/i.test(value)
+);
+
+const uploadAudio = audio => new Promise((resolve, reject) => {
+  const separator = audio.indexOf(",");
+  const buffer = Buffer.from(audio.slice(separator + 1), "base64");
+  const stream = cloudinary.uploader.upload_stream(
+    { resource_type: "video", folder: "mealplan/pronunciations" },
+    (error, result) => {
+      if (error) return reject(error);
+      return resolve(result);
+    },
+  );
+  stream.end(buffer);
+});
+
 // Create a new food item
 
 exports.createFoodItem = async (req, res) => {
@@ -54,10 +74,19 @@ exports.createFoodItem = async (req, res) => {
   }
 
   const cacheId = uuidv4();
+  let pronunciation = null;
+  if (req.body.pronunciation_audio) {
+    if (!isAudioDataUrl(req.body.pronunciation_audio)) {
+      return res.status(400).json({ message: "The pronunciation recording is invalid" });
+    }
+    pronunciation = await uploadAudio(req.body.pronunciation_audio);
+  }
   const foodItem = await foodItemDB.addFoodItemToDB({
     food_name,
     english_name,
     local_name,
+    pronunciation_url: pronunciation?.secure_url || null,
+    pronunciation_public_id: pronunciation?.public_id || null,
     descriptionl: req.body.descriptionl?.trim() || null,
     image_url: req.body.image_url?.trim() || null,
     category_id,
@@ -136,6 +165,34 @@ exports.createFoodItemImage = async(req,res) =>{
   
 
 }
+
+exports.savePronunciation = async (req, res) => {
+  const audio = req.body.audio;
+  if (!isAudioDataUrl(audio)) return res.status(400).json({ message: "A valid audio recording is required" });
+  const food = await prisma.fooditems.findUnique({ where: { food_itemID: req.params.id } });
+  if (!food) return res.status(404).json({ message: "Food item not found" });
+  const result = await uploadAudio(audio);
+  if (food.pronunciation_public_id) await cloudinary.uploader.destroy(food.pronunciation_public_id, { resource_type: "video", invalidate: true });
+  const updated = await prisma.fooditems.update({ where: { food_itemID: req.params.id }, data: { pronunciation_url: result.secure_url, pronunciation_public_id: result.public_id } });
+  return res.status(200).json({ message: "Pronunciation saved", data: updated });
+};
+
+exports.deletePronunciation = async (req, res) => {
+  const food = await prisma.fooditems.findUnique({ where: { food_itemID: req.params.id } });
+  if (!food) return res.status(404).json({ message: "Food item not found" });
+  if (food.pronunciation_public_id) await cloudinary.uploader.destroy(food.pronunciation_public_id, { resource_type: "video", invalidate: true });
+  await prisma.fooditems.update({ where: { food_itemID: req.params.id }, data: { pronunciation_url: null, pronunciation_public_id: null } });
+  return res.status(200).json({ message: "Pronunciation deleted" });
+};
+
+exports.getPronunciation = async (req, res) => {
+  const food = await prisma.fooditems.findUnique({
+    where: { food_itemID: req.params.id },
+    select: { pronunciation_url: true },
+  });
+  if (!food) return res.status(404).json({ message: "Food item not found" });
+  return res.status(200).json({ pronunciation_url: food.pronunciation_url });
+};
 
 // Get a specific food item by ID
 exports.getFoodItemById = async (req, res) => {

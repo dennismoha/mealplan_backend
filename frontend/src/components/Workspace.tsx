@@ -640,6 +640,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
         <FoodDrawer
           item={foodDetail}
           catalog={catalog}
+          canManage={user?.role === "admin"}
           close={() => setFoodDetail(null)}
         />
       )}

@@ -59,6 +59,7 @@ model fooditems {
   image_url            String?                @db.Text
   video_url            String?                @db.Text
   pronunciation_url    String?                @db.Text
+  pronunciation_public_id String?             @db.VarChar(255)
   nutrient_description String?                @db.Text
   food_itemID          String                 @unique(map: "food_itemID_UNIQUE") @db.VarChar(36)
   category_id          String?                @db.VarChar(36)

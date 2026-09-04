@@ -1,5 +1,6 @@
 import type { Catalog, FoodItem, Recipe } from "../api";
 import { FoodImage } from "./CatalogView";
+import { useDeleteFoodPronunciationMutation, useGetFoodPronunciationQuery } from "../store/mealPlanApi";
 
 const lines = (value?: string) =>
   (value || "")
@@ -216,10 +217,12 @@ export function FoodDrawer({
   item,
   catalog,
   close,
+  canManage = false,
 }: {
   item: FoodItem;
   catalog: Catalog;
   close: () => void;
+  canManage?: boolean;
 }) {
   const category = catalog.categories.find(
     (c) => c.food_categoryID === item.category_id,
@@ -258,6 +261,7 @@ export function FoodDrawer({
             {item.descriptionl ||
               "No description has been added for this ingredient yet."}
           </p>
+          <PronunciationRecorder item={item} canManage={canManage} />
           <div className="fact-card">
             <div>
               <span>Category</span>
@@ -327,4 +331,11 @@ export function FoodDrawer({
       </aside>
     </div>
   );
+}
+
+function PronunciationRecorder({ item, canManage }: { item: FoodItem; canManage: boolean }) {
+  const [remove, deleteState] = useDeleteFoodPronunciationMutation();
+  const pronunciation = useGetFoodPronunciationQuery(item.food_itemID, { refetchOnMountOrArgChange: true });
+  const audioUrl = pronunciation.data?.pronunciation_url || item.pronunciation_url;
+  return <section className="drawer-section pronunciation"><h3>Local pronunciation</h3>{pronunciation.isLoading ? <p className="muted">Loading pronunciation…</p> : audioUrl ? <audio controls src={audioUrl} /> : <p className="muted">No pronunciation has been recorded.</p>}{pronunciation.isError && <p className="form-error">The pronunciation could not be loaded.</p>}{canManage && audioUrl && <div className="recording-actions"><button type="button" className="danger" disabled={deleteState.isLoading} onClick={() => remove(item.food_itemID)}>{deleteState.isLoading ? "Deleting…" : "Delete recording"}</button></div>}</section>;
 }

@@ -152,6 +152,7 @@ export const mealPlanApi = createApi({
         food_name: string;
         english_name: string;
         local_name?: string;
+        pronunciation_audio?: string;
         descriptionl: string;
         image_url: string;
         category_id: string;
@@ -159,6 +160,18 @@ export const mealPlanApi = createApi({
       }
     >({
       query: (body) => ({ url: "/food/fooditems", method: "POST", body }),
+      invalidatesTags: ["Catalog"],
+    }),
+    saveFoodPronunciation: builder.mutation<unknown, { id: string; audio: string }>({
+      query: ({ id, audio }) => ({ url: `/food/fooditems/${id}/pronunciation`, method: "PUT", body: { audio } }),
+      invalidatesTags: ["Catalog"],
+    }),
+    getFoodPronunciation: builder.query<{ pronunciation_url: string | null }, string>({
+      query: (id) => `/food/fooditems/${id}/pronunciation`,
+      providesTags: ["Catalog"],
+    }),
+    deleteFoodPronunciation: builder.mutation<void, string>({
+      query: (id) => ({ url: `/food/fooditems/${id}/pronunciation`, method: "DELETE" }),
       invalidatesTags: ["Catalog"],
     }),
     createRecipe: builder.mutation<unknown, Record<string, unknown>>({
@@ -212,6 +225,9 @@ export const {
   useCreateCategoryMutation,
   useCreateSubcategoryMutation,
   useCreateFoodItemMutation,
+  useSaveFoodPronunciationMutation,
+  useGetFoodPronunciationQuery,
+  useDeleteFoodPronunciationMutation,
   useCreateRecipeMutation,
   useCreateMealMutation,
   useUpdateRecipeMutation,
