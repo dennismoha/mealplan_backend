@@ -1,8 +1,28 @@
 const prisma = require("../../models/prisma");
 
+// Select legacy columns explicitly so catalogue reads remain available while
+// deployments apply the english_name migration. food_name is kept in sync
+// with english_name when items are created.
+const foodItemSelect = {
+  idFoodItems: true,
+  food_name: true,
+  local_name: true,
+  descriptionl: true,
+  image_url: true,
+  video_url: true,
+  pronunciation_url: true,
+  nutrient_description: true,
+  food_itemID: true,
+  category_id: true,
+  fooditem_cacheID: true,
+  created_at: true,
+  updated_at: true,
+  foodsubcategory_id: true,
+};
+
 const getMealTypes = () => prisma.mealtype.findMany({
   include: {
-    meal_type_food_items: { include: { fooditems: true } },
+    meal_type_food_items: { include: { fooditems: { select: foodItemSelect } } },
     meal_type_preparation_sources: true,
     meal_type_images: { orderBy: { image_order: "asc" } },
   },
@@ -26,7 +46,10 @@ exports.getCatalog = async (req, res) => {
   ] = await Promise.all([
     prisma.foodcategory.findMany({ orderBy: { category_name: "asc" } }),
     prisma.foodsubcategory.findMany({ orderBy: { subcategory_name: "asc" } }),
-    prisma.fooditems.findMany({ orderBy: { food_name: "asc" } }),
+    prisma.fooditems.findMany({
+      select: foodItemSelect,
+      orderBy: { food_name: "asc" },
+    }),
     getMealTypes(),
     Promise.resolve([]),
     prisma.mealmealtype.findMany({ include: { meals: true, mealtype: true } }),
@@ -39,6 +62,7 @@ exports.getCatalog = async (req, res) => {
   ]);
   foodItems = foodItems.map((food) => ({
     ...food,
+    english_name: food.food_name,
     countries: countries.filter((country) =>
       foodCountryLinks.some(
         (link) =>

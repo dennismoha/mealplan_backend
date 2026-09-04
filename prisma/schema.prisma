@@ -53,6 +53,7 @@ model foodcategory {
 model fooditems {
   idFoodItems          Int                    @id @default(autoincrement())
   food_name            String                 @unique(map: "Name_UNIQUE") @db.VarChar(100)
+  english_name         String?                @unique(map: "EnglishName_UNIQUE") @db.VarChar(100)
   local_name           String?                @db.VarChar(255)
   descriptionl         String?                @db.Text
   image_url            String?                @db.Text

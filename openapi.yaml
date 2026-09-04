@@ -816,6 +816,14 @@ paths:
                 food_name:
                   type: string
                   example: "Pizza"
+                  description: Legacy alias for english_name
+                english_name:
+                  type: string
+                  example: "Banana"
+                local_name:
+                  type: string
+                  nullable: true
+                  example: "Ndizi"
       responses:
         '201':
           description: Food item created
@@ -865,6 +873,12 @@ paths:
                         food_name:
                           type: string
                           example: "Pizza"
+                        english_name:
+                          type: string
+                          example: "Pizza"
+                        local_name:
+                          type: string
+                          nullable: true
                         category_id:
                           type: integer
                           example: 1
@@ -913,6 +927,12 @@ paths:
                       food_name:
                         type: string
                         example: "Pizza"
+                      english_name:
+                        type: string
+                        example: "Pizza"
+                      local_name:
+                        type: string
+                        nullable: true
                       category_id:
                         type: integer
                         example: 1
@@ -1696,6 +1716,12 @@ components:
           format: uuid
         food_name:
           type: string
+          description: Legacy alias for english_name
+        english_name:
+          type: string
+        local_name:
+          type: string
+          nullable: true
         descriptionl:
           type: string
           nullable: true
@@ -2161,6 +2187,14 @@ components:
         food_name:
           type: string
           example: "Maize"
+          description: Legacy alias for english_name
+        english_name:
+          type: string
+          example: "Maize"
+        local_name:
+          type: string
+          nullable: true
+          example: "Mahindi"
         descriptionl:
           type: string
           nullable: true

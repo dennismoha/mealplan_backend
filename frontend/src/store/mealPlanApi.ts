@@ -150,6 +150,8 @@ export const mealPlanApi = createApi({
       unknown,
       {
         food_name: string;
+        english_name: string;
+        local_name?: string;
         descriptionl: string;
         image_url: string;
         category_id: string;

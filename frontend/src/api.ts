@@ -68,6 +68,8 @@ export type FoodItem = {
   food_itemID: string;
   fooditem_cacheID?: string;
   food_name: string;
+  english_name?: string;
+  local_name?: string;
   descriptionl?: string;
   image_url?: string;
   category_id?: string;

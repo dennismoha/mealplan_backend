@@ -7,7 +7,7 @@ async function checkDatabaseConnection() {
   try {
     await prisma.$queryRaw`SELECT 1`;
     console.log('MySQL database is reachable.');
-    await seedReferenceCountries();
+    // await seedReferenceCountries();
     const admin = await bootstrapIdentityData();
     if (admin.created) console.log('Initial administrator account created.');
 

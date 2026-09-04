@@ -119,6 +119,33 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
     plan && typeof plan.data !== "string" ? plan.data.daysOfWeek : {};
   const filled = DAYS.filter((day) => days[day]).length;
 
+  const downloadPlan = () => {
+    if (!plan || typeof plan.data === "string") return;
+    const planDays = plan.data.daysOfWeek;
+    const csvCell = (value: unknown) =>
+      `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const rows = [
+      ["Meal plan", plan.mealplankey],
+      ["Goal", plan.planGoal?.replace(/_/g, " ") || ""],
+      ["Description", plan.description || ""],
+      [],
+      ["Day", ...SLOTS.map((slot) => slot.label)],
+      ...DAYS.map((day) => [
+        day,
+        ...SLOTS.map((slot) => planDays[day]?.[slot.key] || ""),
+      ]),
+    ];
+    const csv = `\uFEFF${rows.map((row) => row.map(csvCell).join(",")).join("\r\n")}`;
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${plan.mealplankey.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "meal-plan"}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
   const openEditor = (day: string) => {
     const current = days[day];
     setEditor({
@@ -363,16 +390,21 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
             </div>
             <div className="plan-control">
               <label htmlFor="plan">Meal plan</label>
-              <select
-                id="plan"
-                value={selectedKey}
-                onChange={(e) => setSelectedKey(e.target.value)}
-                disabled={loading}
-              >
-                {plans.map((item) => (
-                  <option key={item.mealplankey}>{item.mealplankey}</option>
-                ))}
-              </select>
+              <div className="plan-select-actions">
+                <select
+                  id="plan"
+                  value={selectedKey}
+                  onChange={(e) => setSelectedKey(e.target.value)}
+                  disabled={loading}
+                >
+                  {plans.map((item) => (
+                    <option key={item.mealplankey}>{item.mealplankey}</option>
+                  ))}
+                </select>
+                <button className="secondary plan-download" onClick={downloadPlan} disabled={!plan || loading} title="Download the selected meal plan as CSV">
+                  ↓ Download
+                </button>
+              </div>
             </div>
           </div>
 

@@ -26,12 +26,15 @@ const { upload } = require("#mealplan/config/cloudinary_upload.js");
 // Create a new food item
 
 exports.createFoodItem = async (req, res) => {
-  const food_name = req.body.food_name?.trim();
+  const english_name = (req.body.english_name || req.body.food_name)?.trim();
+  // food_name remains populated as a compatibility alias for older clients.
+  const food_name = english_name;
+  const local_name = req.body.local_name?.trim() || null;
   const category_id = req.body.category_id;
   const foodsubcategory_id = req.body.foodsubcategory_id;
 
-  if (!food_name || !category_id || !foodsubcategory_id) {
-    return res.status(400).json({ message: "Food name, category, and subcategory are required" });
+  if (!english_name || !category_id || !foodsubcategory_id) {
+    return res.status(400).json({ message: "English name, category, and subcategory are required" });
   }
 
   const subcategory = await prisma.foodsubcategory.findFirst({
@@ -42,7 +45,9 @@ exports.createFoodItem = async (req, res) => {
   }
 
   // Check if the food item already exists
-  const existingFoodItem = await prisma.fooditems.findUnique({ where: { food_name } });
+  const existingFoodItem = await prisma.fooditems.findFirst({
+    where: { OR: [{ english_name }, { food_name: english_name }] },
+  });
 
   if (existingFoodItem) {
     throw new ConflictError("food resource exists");
@@ -51,6 +56,8 @@ exports.createFoodItem = async (req, res) => {
   const cacheId = uuidv4();
   const foodItem = await foodItemDB.addFoodItemToDB({
     food_name,
+    english_name,
+    local_name,
     descriptionl: req.body.descriptionl?.trim() || null,
     image_url: req.body.image_url?.trim() || null,
     category_id,
