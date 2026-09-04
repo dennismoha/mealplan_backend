@@ -163,6 +163,10 @@ export const mealPlanApi = createApi({
       query: (body) => ({ url: "/recipes", method: "POST", body }),
       invalidatesTags: ["Catalog"],
     }),
+    createMeal: builder.mutation<unknown, Record<string, unknown>>({
+      query: (body) => ({ url: "/meal/meals/meals", method: "POST", body }),
+      invalidatesTags: ["Catalog"],
+    }),
     updateRecipe: builder.mutation<
       unknown,
       { id: number; body: Record<string, unknown> }
@@ -187,6 +191,7 @@ export const {
   useCreateSubcategoryMutation,
   useCreateFoodItemMutation,
   useCreateRecipeMutation,
+  useCreateMealMutation,
   useUpdateRecipeMutation,
   useDeleteRecipeMutation,
 } = mealPlanApi;

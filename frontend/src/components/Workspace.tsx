@@ -14,6 +14,7 @@ import { useSelector } from "react-redux";
 import type { RootState } from "../store";
 import { AccountButton, AdminPanel } from "./AuthWorkspace";
 import CountryExplorer from "./CountryExplorer";
+import MealForm from "./MealForm";
 import RecipeForm from "./RecipeForm";
 import RecipeManager from "./RecipeManager";
 import {
@@ -65,6 +66,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
   } | null>(null);
   const [foodDetail, setFoodDetail] = useState<FoodItem | null>(null);
   const [showRecipe, setShowRecipe] = useState(false);
+  const [showMealForm, setShowMealForm] = useState(false);
   const [budgetFilter, setBudgetFilter] = useState<"all" | "budget">("all");
   const user = useSelector((state: RootState) => state.auth.user);
 
@@ -263,6 +265,15 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
               >
                 ↧ Print plan
               </button>
+              {canCreatePlans && (
+                <button
+                  className="secondary"
+                  onClick={() => setShowMealForm(true)}
+                  disabled={catalogOffline}
+                >
+                  ＋ Meal
+                </button>
+              )}
               {canCreatePlans && (
                 <button
                   className="secondary"
@@ -479,16 +490,15 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
             </span>
             <h2>{editor.day}</h2>
             <p className="modal-copy">Make it nourishing, make it yours.</p>
-            <div className="fields">
+            <div className="fields meal-picker-fields">
               {SLOTS.map((slot) => (
                 <label key={slot.key}>
                   <span>
                     {slot.icon} {slot.label}
                   </span>
-                  <input
+                  <select
                     required
                     value={editor.values[slot.key]}
-                    placeholder={`What’s for ${slot.label.toLowerCase()}?`}
                     onChange={(e) =>
                       setEditor({
                         ...editor,
@@ -498,7 +508,23 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
                         },
                       })
                     }
-                  />
+                  >
+                    <option value="">Choose a meal…</option>
+                    {editor.values[slot.key] &&
+                      !catalog.mealSlots.some(
+                        (meal) => meal.mealName === editor.values[slot.key],
+                      ) && (
+                        <option value={editor.values[slot.key]}>
+                          {editor.values[slot.key]} (legacy)
+                        </option>
+                      )}
+                    {catalog.mealSlots.map((meal) => (
+                      <option key={meal.mealID} value={meal.mealName}>
+                        {meal.mealName}
+                        {meal.local_name ? ` · ${meal.local_name}` : ""}
+                      </option>
+                    ))}
+                  </select>
                 </label>
               ))}
             </div>
@@ -550,6 +576,19 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
           saved={() => {
             setShowRecipe(false);
             setToast({ kind: "success", message: "Recipe saved." });
+          }}
+        />
+      )}
+      {showMealForm && (
+        <MealForm
+          catalog={catalog}
+          close={() => setShowMealForm(false)}
+          saved={(name) => {
+            setShowMealForm(false);
+            setToast({
+              kind: "success",
+              message: `“${name}” is now available in the meal picker.`,
+            });
           }}
         />
       )}
