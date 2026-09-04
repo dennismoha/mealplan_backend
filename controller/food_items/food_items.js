@@ -6,7 +6,7 @@ const {
   getSuccessMessage,
 } = require("#mealplan/middlewares/custom_success/sucess_message.js");
 
-const conflictError = require("#mealplan/middlewares/custom_errors/conflict_error.js");
+const ConflictError = require("#mealplan/middlewares/custom_errors/conflict_error.js");
 
 const winstonLogger = require("#mealplan/config/winston_logger.js");
 
@@ -15,7 +15,6 @@ const {
 } = require("#mealplan/globals/services/redis/food_item_cache.js");
 const foodItemQueue = require("#mealplan/globals/services/queues/food-item.js");
 const {
-  FOODITEMQUEUE,
   FOOD_ITEM_SET,
   UPDATEFOODITEMQUEUE,
   DELETEFOODITEMQUEUE,
@@ -27,30 +26,42 @@ const { upload } = require("#mealplan/config/cloudinary_upload.js");
 // Create a new food item
 
 exports.createFoodItem = async (req, res) => {
-  const { food_name } = req.body;
+  const food_name = req.body.food_name?.trim();
+  const category_id = req.body.category_id;
+  const foodsubcategory_id = req.body.foodsubcategory_id;
+
+  if (!food_name || !category_id || !foodsubcategory_id) {
+    return res.status(400).json({ message: "Food name, category, and subcategory are required" });
+  }
+
+  const subcategory = await prisma.foodsubcategory.findFirst({
+    where: { foodsubcategory_id, food_category_id: category_id },
+  });
+  if (!subcategory) {
+    return res.status(400).json({ message: "Choose a subcategory that belongs to the selected category" });
+  }
 
   // Check if the food item already exists
-  const existingFoodItem = await prisma.fooditems.findMany({ where: { food_name } });
+  const existingFoodItem = await prisma.fooditems.findUnique({ where: { food_name } });
 
-  if (existingFoodItem.length > 0) {
-    // Food item with the same name or ID already exists
+  if (existingFoodItem) {
     throw new ConflictError("food resource exists");
   }
 
-  let cacheId = uuidv4();
-
-  // add to cache
-  await foodItemRedis.saveFoodItemToCache(cacheId, req.body);
-
-  // add to db
-
-  await foodItemQueue.addFoodItemJob(FOODITEMQUEUE, {
-    ...req.body,
+  const cacheId = uuidv4();
+  const foodItem = await foodItemDB.addFoodItemToDB({
+    food_name,
+    descriptionl: req.body.descriptionl?.trim() || null,
+    image_url: req.body.image_url?.trim() || null,
+    category_id,
+    foodsubcategory_id,
     fooditem_cacheID: cacheId,
   });
 
-  
-  res.status(201).json({ message: "added food item" });
+  // The database is authoritative. A cache outage must not roll back a valid
+  // food item or cause the API to claim success before persistence finishes.
+  await foodItemRedis.saveFoodItemToCache(cacheId, foodItem);
+  return res.status(201).json({ message: "added food item", data: foodItem });
 };
 
 /*

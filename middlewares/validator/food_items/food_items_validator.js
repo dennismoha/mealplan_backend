@@ -3,6 +3,7 @@ const { param } = require('express-validator/check');
 exports.createFoodItemValidator = (req, res, next) => {
   req.check('food_name', 'Food name is required').notEmpty();
   req.check('category_id', 'Category ID is required').notEmpty();
+  req.check('foodsubcategory_id', 'Subcategory ID is required').notEmpty();
   // Add more validation rules as needed
   const errors = req.validationErrors();
 

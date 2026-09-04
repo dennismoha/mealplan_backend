@@ -78,5 +78,31 @@ exports.remove = async (req, res) => {
     return writeError(res, writeFailure);
   }
 };
-exports.linkFood = async (req, res) => { await prisma.food_item_countries.create({ data: { country_id: Number(req.params.id), food_item_id: req.body.foodItemId } }); res.json({ success: true }); };
-exports.linkMeal = async (req, res) => { await prisma.meal_type_countries.create({ data: { country_id: Number(req.params.id), meal_type_id: req.body.mealTypeId } }); res.json({ success: true }); };
+exports.linkFood = async (req, res) => {
+  const countryId = Number(req.params.id);
+  const foodItemId = req.body.foodItemId;
+  if (!Number.isInteger(countryId) || !foodItemId) return res.status(400).json({ message: 'A valid country and food item are required.' });
+  const [country, food, existing] = await Promise.all([
+    prisma.countries.findUnique({ where: { id: countryId } }),
+    prisma.fooditems.findUnique({ where: { food_itemID: foodItemId } }),
+    prisma.food_item_countries.findFirst({ where: { country_id: countryId, food_item_id: foodItemId } }),
+  ]);
+  if (!country || !food) return res.status(404).json({ message: 'Country or food item not found.' });
+  if (existing) return res.status(409).json({ message: 'This food item is already linked to the country.' });
+  const link = await prisma.food_item_countries.create({ data: { country_id: countryId, food_item_id: foodItemId } });
+  return res.status(201).json({ link });
+};
+exports.linkMeal = async (req, res) => {
+  const countryId = Number(req.params.id);
+  const mealTypeId = req.body.mealTypeId;
+  if (!Number.isInteger(countryId) || !mealTypeId) return res.status(400).json({ message: 'A valid country and meal are required.' });
+  const [country, meal, existing] = await Promise.all([
+    prisma.countries.findUnique({ where: { id: countryId } }),
+    prisma.mealtype.findUnique({ where: { mealTypesID: mealTypeId } }),
+    prisma.meal_type_countries.findFirst({ where: { country_id: countryId, meal_type_id: mealTypeId } }),
+  ]);
+  if (!country || !meal) return res.status(404).json({ message: 'Country or meal not found.' });
+  if (existing) return res.status(409).json({ message: 'This meal is already linked to the country.' });
+  const link = await prisma.meal_type_countries.create({ data: { country_id: countryId, meal_type_id: mealTypeId } });
+  return res.status(201).json({ link });
+};

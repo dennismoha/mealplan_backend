@@ -27,6 +27,11 @@ exports.createNewMealType = async (req, res) => {
     },
     include: includeDetails,
   });
+  if (country_id) {
+    await prisma.meal_type_countries.create({
+      data: { meal_type_id: meal.mealTypesID, country_id: Number(country_id) },
+    });
+  }
   return res.status(201).json({ message: 'Successfully added a meal', data: meal });
 };
 
