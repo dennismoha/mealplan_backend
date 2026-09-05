@@ -638,7 +638,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
       )}
       {foodDetail && (
         <FoodDrawer
-          item={foodDetail}
+          item={catalog.foodItems.find(item => item.food_itemID === foodDetail.food_itemID) || foodDetail}
           catalog={catalog}
           canManage={user?.role === "admin"}
           close={() => setFoodDetail(null)}

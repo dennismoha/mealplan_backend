@@ -954,7 +954,9 @@ paths:
     put:
       tags:
         - food-items
-      summary: Update a food item by ID
+      security:
+        - bearerAuth: []
+      summary: Update a food item by ID (administrator)
       parameters:
         - in: path
           name: id
@@ -973,9 +975,29 @@ paths:
                 food_name:
                   type: string
                   example: "Pizza"
+                english_name:
+                  type: string
+                  maxLength: 100
+                descriptionl:
+                  type: string
+                image_url:
+                  type: string
                 category_id:
-                  type: integer
-                  example: 1
+                  type: string
+                  format: uuid
+                foodsubcategory_id:
+                  type: string
+                  format: uuid
+                local_names:
+                  type: array
+                  description: Omit to preserve names; supply a complete list with existing IDs to edit, or an empty list to remove all names. Existing recordings are preserved unless replaced.
+                  items:
+                    allOf:
+                      - $ref: '#/components/schemas/FoodLocalName'
+                      - type: object
+                        properties:
+                          id:
+                            type: integer
       responses:
         '200':
           description: Food item updated successfully
@@ -1010,7 +1032,9 @@ paths:
     delete:
       tags:
         - food-items
-      summary: Delete a food item by ID
+      security:
+        - bearerAuth: []
+      summary: Delete an unused food item (administrator)
       parameters:
         - in: path
           name: id
@@ -1019,6 +1043,8 @@ paths:
             type: string
           description: The ID of the food item to delete
       responses:
+        '409':
+          description: Food item is used in a meal or recipe, or has concurrent changes. No deletion performed.
         '200':
           description: Food item deleted successfully
           content:

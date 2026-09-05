@@ -209,7 +209,7 @@ model meal_food_items {
   preparation_notes String?   @db.Text
   created_at        DateTime? @default(now()) @db.Timestamp(0)
   meals             meals     @relation(fields: [meal_id], references: [mealID], onDelete: Cascade, map: "meal_food_items_to_meals")
-  fooditems         fooditems @relation(fields: [food_item_id], references: [food_itemID], onDelete: Cascade, map: "meal_food_items_to_fooditems")
+  fooditems         fooditems @relation(fields: [food_item_id], references: [food_itemID], onDelete: Restrict, map: "meal_food_items_to_fooditems_restrict")
 
   @@unique([meal_id, food_item_id], name: "unique_meal_food")
   @@index([meal_id], map: "idx_meal_id")
@@ -270,7 +270,7 @@ model meal_type_food_items {
   preparation_notes String?   @db.Text
   created_at        DateTime? @default(now()) @db.Timestamp(0)
   mealtype          mealtype  @relation(fields: [meal_type_id], references: [mealTypesID], onDelete: Cascade, map: "meal_type_food_items_to_mealtype")
-  fooditems         fooditems @relation(fields: [food_item_id], references: [food_itemID], onDelete: Cascade, map: "meal_type_food_items_to_fooditems")
+  fooditems         fooditems @relation(fields: [food_item_id], references: [food_itemID], onDelete: Restrict, map: "meal_type_food_items_to_fooditems_restrict")
 
   @@unique([meal_type_id, food_item_id], name: "unique_meal_type_food")
   @@index([food_item_id], map: "idx_meal_type_food_item")

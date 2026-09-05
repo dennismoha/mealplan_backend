@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { LocalNamesList } from "./FoodLocalNames";
 import type { Catalog, FoodItem, Recipe } from "../api";
-import { FoodImage } from "./CatalogView";
-import { useDeleteFoodPronunciationMutation, useGetFoodPronunciationQuery } from "../store/mealPlanApi";
+import { FoodImage, AddCatalogModal } from "./CatalogView";
+import { useDeleteFoodItemMutation, useDeleteFoodPronunciationMutation, useGetFoodPronunciationQuery } from "../store/mealPlanApi";
 
 const lines = (value?: string) =>
   (value || "")
@@ -225,6 +226,16 @@ export function FoodDrawer({
   close: () => void;
   canManage?: boolean;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [error, setError] = useState("");
+  const [remove, deleteState] = useDeleteFoodItemMutation();
+  const deleteItem = async () => {
+    setError("");
+    try { await remove(item.food_itemID).unwrap(); close(); }
+    catch (error) { setError((error as { data?: { message?: string } }).data?.message || "Could not delete the food item."); setConfirmDelete(false); }
+  };
+  if (editing) return <AddCatalogModal kind="food" item={item} catalog={catalog} close={() => setEditing(false)} saved={close} fail={setError} />;
   const category = catalog.categories.find(
     (c) => c.food_categoryID === item.category_id,
   );
@@ -255,6 +266,16 @@ export function FoodDrawer({
             {subcategory ? ` · ${subcategory.subcategory_name}` : ""}
           </span>
           <h2>{item.english_name || item.food_name}</h2>
+          {canManage && <div className="recording-actions">
+            <button type="button" className="secondary" onClick={() => { setError(""); setEditing(true); }}>Edit food item</button>
+            <button type="button" className="danger" disabled={deleteState.isLoading} onClick={() => setConfirmDelete(true)}>Delete food item</button>
+          </div>}
+          {confirmDelete && <div role="alert">
+            <p>Delete {item.food_name}? This cannot be undone. Food items used in meals or recipes cannot be deleted.</p>
+            <button type="button" disabled={deleteState.isLoading} onClick={deleteItem}>{deleteState.isLoading ? "Deleting…" : "Confirm delete"}</button>
+            <button type="button" disabled={deleteState.isLoading} onClick={() => setConfirmDelete(false)}>Cancel</button>
+          </div>}
+          {error && <p role="alert" className="form-error">{error}</p>}
           <LocalNamesList item={item} playback canManage={canManage} />
           <p className="lead">
             {item.descriptionl ||

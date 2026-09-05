@@ -9,16 +9,9 @@ const {
 
 const ConflictError = require("#mealplan/middlewares/custom_errors/conflict_error.js");
 
-const winstonLogger = require("#mealplan/config/winston_logger.js");
-
 const {
   foodItemRedis,
 } = require("#mealplan/globals/services/redis/food_item_cache.js");
-const foodItemQueue = require("#mealplan/globals/services/queues/food-item.js");
-const {
-  UPDATEFOODITEMQUEUE,
-  DELETEFOODITEMQUEUE,
-} = require("#mealplan/constants.js");
 const foodItemDB = require("#mealplan/globals/services/db/food_item_db.js");
 const prisma = require("#mealplan/models/prisma.js");
 const { upload } = require("#mealplan/config/cloudinary_upload.js");
@@ -226,50 +219,84 @@ exports.getFoodItemById = async (req, res) => {
  
 };
 
-// Update a food item by ID
+// Update by stable food UUID; accept cache IDs for older clients.
 exports.updateFoodItemById = async (req, res) => {
-  // Check if the food item already exists
-  const existingFoodItem = await prisma.fooditems.findMany({ select: { food_name: true, category_id: true, fooditem_cacheID: true }, where: { food_name: req.body.food_name } });
-
-  console.log("existing food item is ", existingFoodItem);
-
-  if (existingFoodItem.length > 1) {
-    // Food item with the same name or ID already exists
-    throw new ConflictError("food resource exists");
-  }
-
-  if (existingFoodItem.length === 1) {
-    let { food_name, category_id } = existingFoodItem[0];
-
-    if (
-      food_name === req.body.food_name &&
-      category_id === req.body.category_id
-    ) {
-      // update cache first
-      let updateCache = await foodItemRedis.updateSingleFoodInFromCache(
-        req.body
-      );
-
-      // update the db
-
-      await foodItemQueue.addFoodItemJob(UPDATEFOODITEMQUEUE, req.body);
-
-      res
-        .status(200)
-        .json({ message: "Food item updated successfully", updateCache });
+  const food = await prisma.fooditems.findFirst({ where: { OR: [{ food_itemID: req.params.id }, { fooditem_cacheID: req.params.id }] }, include: { local_names: true } });
+  if (!food) return res.status(404).json({ message: "Food item not found" });
+  const data = {};
+  let names;
+  try {
+    for (const [key, max] of [["descriptionl", 65535], ["image_url", 65535], ["local_name", 255], ["category_id", 36], ["foodsubcategory_id", 36]]) {
+      if (req.body[key] !== undefined) {
+        if (typeof req.body[key] !== "string" || req.body[key].trim().length > max) throw new Error(`Invalid ${key}`);
+        data[key] = req.body[key].trim() || null;
+      }
     }
+    const name = req.body.english_name ?? req.body.food_name;
+    if (name !== undefined) {
+      if (typeof name !== "string" || !name.trim() || name.trim().length > 100) throw new Error("English name must contain 1–100 characters");
+      data.english_name = data.food_name = name.trim();
+    }
+    if (req.body.local_names !== undefined) {
+      names = validateLocalNames(req.body.local_names);
+      const ids = req.body.local_names.map(entry => entry.id).filter(id => id !== undefined);
+      if (new Set(ids).size !== ids.length || ids.some(id => !food.local_names.some(entry => entry.id === id))) throw new Error("Invalid local name ID for this food item");
+      names = names.map((entry, index) => ({ ...entry, id: req.body.local_names[index].id }));
+      const countryIds = [...new Set(names.map(entry => entry.country_id))];
+      if (await prisma.countries.count({ where: { id: { in: countryIds } } }) !== countryIds.length) throw new Error("Choose an existing country for every local name");
+    }
+  } catch (error) { return res.status(400).json({ message: error.message }); }
+  const category_id = data.category_id === undefined ? food.category_id : data.category_id;
+  const foodsubcategory_id = data.foodsubcategory_id === undefined ? food.foodsubcategory_id : data.foodsubcategory_id;
+  if (!category_id || !foodsubcategory_id || !await prisma.foodsubcategory.findFirst({ where: { foodsubcategory_id, food_category_id: category_id } })) return res.status(400).json({ message: "Choose a subcategory belonging to the selected category" });
+  const uploaded = [];
+  const removed = [];
+  try {
+    if (names) {
+      for (const entry of names) {
+        if (entry.pronunciation_audio) {
+          const audio = await uploadAudio(entry.pronunciation_audio);
+          uploaded.push(audio.public_id);
+          entry.pronunciation_url = audio.secure_url;
+          entry.pronunciation_public_id = audio.public_id;
+          const old = food.local_names.find(name => name.id === entry.id);
+          if (old?.pronunciation_public_id) removed.push(old.pronunciation_public_id);
+        }
+        delete entry.pronunciation_audio;
+      }
+      const keptIds = names.filter(entry => entry.id).map(entry => entry.id);
+      removed.push(...food.local_names.filter(entry => !keptIds.includes(entry.id)).map(entry => entry.pronunciation_public_id).filter(Boolean));
+      data.local_names = {
+        deleteMany: { id: { notIn: keptIds } },
+        update: names.filter(entry => entry.id).map(({ id, ...fields }) => ({ where: { id }, data: fields })),
+        create: names.filter(entry => !entry.id).map(({ id, ...fields }) => fields),
+      };
+    }
+    const updated = await prisma.fooditems.update({ where: { food_itemID: food.food_itemID }, data, include: { local_names: { include: { country: true } } } });
+    await foodItemRedis.deleteSingleFoodItemFromCache(food.fooditem_cacheID);
+    await Promise.allSettled(removed.map(id => cloudinary.uploader.destroy(id, { resource_type: "video" })));
+    return res.json({ message: "Food item updated successfully", data: updated });
+  } catch (error) {
+    await Promise.allSettled(uploaded.map(id => cloudinary.uploader.destroy(id, { resource_type: "video" })));
+    if (error.code === "P2002") return res.status(409).json({ message: "A food item or local name with these details already exists" });
+    throw error;
   }
 };
 
-// Delete a food item by ID
 exports.deleteFoodItemById = async (req, res) => {
-  // delete id from cache
-
-  await foodItemRedis.deleteSingleFoodItemFromCache(req.params.id);
-
-  await foodItemQueue.addFoodItemJob(DELETEFOODITEMQUEUE, req.params.id);
-
-  res.status(200).json({ message: "Food item deleted successfully" });
+  const { deleteUnusedFoodItem } = require("../../globals/services/db/delete_food_item");
+  let result;
+  try { result = await deleteUnusedFoodItem(prisma, req.params.id); }
+  catch (error) {
+    if (["P2003", "P2034"].includes(error.code)) return res.status(409).json({ message: "This food item is in use or was changed. Refresh and try again." });
+    throw error;
+  }
+  if (result.food) {
+    await foodItemRedis.deleteSingleFoodItemFromCache(result.food.fooditem_cacheID);
+    const recordings = [result.food.pronunciation_public_id, ...result.food.local_names.map(name => name.pronunciation_public_id)].filter(Boolean);
+    await Promise.allSettled(recordings.map(id => cloudinary.uploader.destroy(id, { resource_type: "video" })));
+  }
+  return res.status(result.status).json({ message: result.message });
 };
 
 // A name ID is always scoped to its food item to prevent cross-food updates.

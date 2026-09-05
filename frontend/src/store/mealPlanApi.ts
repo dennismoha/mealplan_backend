@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { Catalog, Country, FoodLocalName, DayMeals, MealPlan, MealPlanInterval } from "../api";
+import type { Catalog, Country, FoodItem, FoodLocalName, DayMeals, MealPlan, MealPlanInterval } from "../api";
 
 const baseUrl = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 const emptyCatalog: Catalog = {
@@ -163,6 +163,14 @@ export const mealPlanApi = createApi({
       query: (body) => ({ url: "/food/fooditems", method: "POST", body }),
       invalidatesTags: ["Catalog"],
     }),
+    updateFoodItem: builder.mutation<{ data: FoodItem }, { id: string; body: Partial<FoodItem> }>({
+      query: ({ id, body }) => ({ url: `/food/fooditems/${id}`, method: "PUT", body }),
+      invalidatesTags: ["Catalog"],
+    }),
+    deleteFoodItem: builder.mutation<void, string>({
+      query: id => ({ url: `/food/fooditems/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Catalog"],
+    }),
     saveLocalNamePronunciation: builder.mutation<{ data: FoodLocalName }, { id: string; nameId: number; audio: string | null }>({
       query: ({ id, nameId, audio }) => ({ url: `/food/fooditems/${id}/local-names/${nameId}/pronunciation`, method: "PUT", body: { audio } }),
       invalidatesTags: ["Catalog"],
@@ -234,6 +242,8 @@ export const {
   useGetFoodPronunciationQuery,
   useDeleteFoodPronunciationMutation,
   useSaveLocalNamePronunciationMutation,
+  useUpdateFoodItemMutation,
+  useDeleteFoodItemMutation,
   useCreateRecipeMutation,
   useCreateMealMutation,
   useUpdateRecipeMutation,

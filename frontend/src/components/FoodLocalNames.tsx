@@ -26,6 +26,7 @@ export function LocalNamesEditor({ countries, value, onChange, onRecordingChange
       {entry.scope === "tribal" && <label><span>Tribe name</span><input required maxLength={100} value={entry.tribe_name || ""} onChange={e => update(index, { tribe_name: e.target.value })} /></label>}
       {entry.scope === "official_language" && <label><span>Official language</span><input required maxLength={100} value={entry.language_name || ""} onChange={e => update(index, { language_name: e.target.value })} /></label>}
       <label><span>Local name</span><input required maxLength={255} value={entry.name} onChange={e => update(index, { name: e.target.value })} /></label>
+      {entry.pronunciation_url && !entry.pronunciation_audio && <audio controls src={entry.pronunciation_url} />}
       <NameRecorder value={entry.pronunciation_audio} disabled={active !== null && active !== index} onChange={audio => update(index, { pronunciation_audio: audio })} onBusy={busy => { setActive(busy ? index : null); onRecordingChange(busy); }} />
       <button type="button" disabled={active !== null} className="danger" onClick={() => onChange(value.filter((_, i) => i !== index))}>Remove name {index + 1}</button>
     </fieldset>)}
