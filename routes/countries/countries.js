@@ -8,4 +8,6 @@ router.put('/:id', verifyJwt, requireRoles('admin'), controller.update);
 router.delete('/:id', verifyJwt, requireRoles('admin'), controller.remove);
 router.post('/:id/foods', verifyJwt, requireRoles('admin'), controller.linkFood);
 router.post('/:id/meals', verifyJwt, requireRoles('admin'), controller.linkMeal);
+router.delete('/:id/foods/:itemId', verifyJwt, requireRoles('admin'), controller.unlinkFood);
+router.delete('/:id/meals/:itemId', verifyJwt, requireRoles('admin'), controller.unlinkMeal);
 module.exports = router;

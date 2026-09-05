@@ -62,14 +62,15 @@ exports.update = async (req, res) => {
 };
 exports.remove = async (req, res) => {
   const id = Number(req.params.id);
-  const [foodLinks, mealLinks, meals, mealTypes] = await Promise.all([
+  const [foodLinks, mealLinks, meals, mealTypes, localNames] = await Promise.all([
     prisma.food_item_countries.count({ where: { country_id: id } }),
     prisma.meal_type_countries.count({ where: { country_id: id } }),
     prisma.meals.count({ where: { country_id: id } }),
     prisma.mealtype.count({ where: { country_id: id } }),
+    prisma.food_item_local_names.count({ where: { country_id: id } }),
   ]);
-  if (foodLinks + mealLinks + meals + mealTypes > 0) {
-    return res.status(409).json({ message: 'This country is linked to food or meal records. Remove those links before deleting it.' });
+  if (foodLinks + mealLinks + meals + mealTypes + localNames > 0) {
+    return res.status(409).json({ message: 'This country is linked to food, meal, or local-name records. Remove those links before deleting it.' });
   }
   try {
     await prisma.countries.delete({ where: { id } });
@@ -106,3 +107,23 @@ exports.linkMeal = async (req, res) => {
   const link = await prisma.meal_type_countries.create({ data: { country_id: countryId, meal_type_id: mealTypeId } });
   return res.status(201).json({ link });
 };
+
+const unlinkCountryItem = kind => async (req, res) => {
+  const country_id = Number(req.params.id);
+  const itemId = req.params.itemId;
+  if (!Number.isSafeInteger(country_id) || country_id < 1 || typeof itemId !== 'string' || !itemId.trim()) return res.status(400).json({ message: 'A valid country and item are required.' });
+  const result = await prisma.$transaction(async tx => {
+    if (!await tx.countries.findUnique({ where: { id: country_id } })) return { status: 404, message: 'Country not found.' };
+    if (kind === 'food') {
+      const removed = await tx.food_item_countries.deleteMany({ where: { country_id, food_item_id: itemId } });
+      return removed.count ? { status: 200, message: 'Food item removed from this country. The food item and its meal references are preserved.' } : { status: 404, message: 'Food item is not linked to this country.' };
+    }
+    const removed = await tx.meal_type_countries.deleteMany({ where: { country_id, meal_type_id: itemId } });
+    // Older meal records also store a direct country association.
+    const direct = await tx.mealtype.updateMany({ where: { mealTypesID: itemId, country_id }, data: { country_id: null } });
+    return removed.count || direct.count ? { status: 200, message: 'Meal removed from this country. The meal and its recipes are preserved.' } : { status: 404, message: 'Meal is not linked to this country.' };
+  });
+  return res.status(result.status).json({ message: result.message });
+};
+exports.unlinkFood = unlinkCountryItem('food');
+exports.unlinkMeal = unlinkCountryItem('meal');

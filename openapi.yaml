@@ -1548,6 +1548,68 @@ paths:
   #     responses:
   #         200:
 
+  /countries/{id}/foods/{itemId}:
+    delete:
+      tags: [countries]
+      summary: Remove a food item association from a country
+      description: Administrator only. Preserves the item, recipes, meal references, recordings, and other country associations.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - in: path
+          name: itemId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Country association removed
+        '400':
+          description: Invalid country or item ID
+        '401':
+          description: Authentication required
+        '403':
+          description: Administrator access required
+        '404':
+          description: Country or association not found
+
+  /countries/{id}/meals/{itemId}:
+    delete:
+      tags: [countries]
+      summary: Remove a meal association from a country
+      description: Administrator only. Preserves the item, recipes, meal references, recordings, and other country associations.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - in: path
+          name: itemId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Country association removed
+        '400':
+          description: Invalid country or item ID
+        '401':
+          description: Authentication required
+        '403':
+          description: Administrator access required
+        '404':
+          description: Country or association not found
+
 components:
   securitySchemes:
     bearerAuth:

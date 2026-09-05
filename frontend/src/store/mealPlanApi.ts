@@ -218,6 +218,14 @@ export const mealPlanApi = createApi({
       query: (id) => ({ url: `/countries/${id}`, method: "DELETE" }),
       invalidatesTags: ["Catalog"],
     }),
+    unlinkCountryFood: builder.mutation<unknown, { countryId: number; itemId: string }>({
+      query: ({ countryId, itemId }) => ({ url: `/countries/${countryId}/foods/${itemId}`, method: "DELETE" }),
+      invalidatesTags: ["Catalog"],
+    }),
+    unlinkCountryMeal: builder.mutation<unknown, { countryId: number; itemId: string }>({
+      query: ({ countryId, itemId }) => ({ url: `/countries/${countryId}/meals/${itemId}`, method: "DELETE" }),
+      invalidatesTags: ["Catalog"],
+    }),
     linkCountryFood: builder.mutation<unknown, { countryId: number; foodItemId: string }>({
       query: ({ countryId, foodItemId }) => ({ url: `/countries/${countryId}/foods`, method: "POST", body: { foodItemId } }),
       invalidatesTags: ["Catalog"],
@@ -252,5 +260,7 @@ export const {
   useUpdateCountryMutation,
   useDeleteCountryMutation,
   useLinkCountryFoodMutation,
+  useUnlinkCountryFoodMutation,
+  useUnlinkCountryMealMutation,
   useLinkCountryMealMutation,
 } = mealPlanApi;

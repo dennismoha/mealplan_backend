@@ -63,6 +63,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
   const [mealDetail, setMealDetail] = useState<{
     name: string;
     slot: string;
+    id?: string;
   } | null>(null);
   const [foodDetail, setFoodDetail] = useState<FoodItem | null>(null);
   const [showRecipe, setShowRecipe] = useState(false);
@@ -475,7 +476,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
           </p>
         </section>
 
-        {mode === "public" && <DiscoveryStrip catalog={catalog} />}
+        {<DiscoveryStrip showExtras={mode === "public"} catalog={catalog} onMeal={(id, name) => setMealDetail({ name, slot: "meal", id })} />}
         {mode !== "professional" && (
           <div id="library">
             <CatalogView
@@ -617,6 +618,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
           close={() => setShowMealForm(false)}
           saved={(name) => {
             setShowMealForm(false);
+            setMealDetail({ name, slot: "meal" });
             setToast({
               kind: "success",
               message: `“${name}” is now available in the meal picker.`,
@@ -626,6 +628,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
       )}
       {mealDetail && (
         <MealDrawer
+          mealId={mealDetail.id}
           name={mealDetail.name}
           slot={mealDetail.slot}
           catalog={catalog}

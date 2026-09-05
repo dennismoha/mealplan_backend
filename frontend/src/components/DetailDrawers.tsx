@@ -1,3 +1,6 @@
+import RecipeForm from "./RecipeForm";
+import { useSelector } from "react-redux";
+import type { RootState } from "../store";
 import { useState } from "react";
 import { LocalNamesList } from "./FoodLocalNames";
 import type { Catalog, FoodItem, Recipe } from "../api";
@@ -13,31 +16,28 @@ const lines = (value?: string) =>
 export function MealDrawer({
   name,
   slot,
+  mealId,
   catalog,
   close,
   onFood,
 }: {
   name: string;
   slot: string;
+  mealId?: string;
   catalog: Catalog;
   close: () => void;
   onFood: (food: FoodItem) => void;
 }) {
+  const user = useSelector((state: RootState) => state.auth.user);
+  const [editingRecipe, setEditingRecipe] = useState(false);
   const meal = catalog.mealSlots.find(
-    (item) => item.mealName.toLowerCase() === name.toLowerCase(),
+    (item) => mealId ? item.mealID === mealId : item.mealName.toLowerCase() === name.toLowerCase(),
   );
   const mealAssignments = catalog.assignments.filter(
     (assignment) => assignment.mealID === meal?.mealID,
   );
-  const assignedTypeIds = new Set(
-    mealAssignments.map((assignment) => assignment.mealTypesID),
-  );
-  const recipe = catalog.recipes.find(
-    (r) =>
-      r.meal_typeID === meal?.mealID ||
-      (r.meal_typeID && assignedTypeIds.has(r.meal_typeID)) ||
-      r.title.toLowerCase() === name.toLowerCase(),
-  );
+  const recipe = catalog.recipes.find(r => r.meal_typeID === (mealId || meal?.mealID));
+  const canManageRecipe = user?.role === "admin" || (user?.role === "professional" && (!recipe || recipe.owner_user_id === user.id));
   const assignedTypes = mealAssignments.map(
     (assignment) => assignment.meal_name,
   );
@@ -45,16 +45,17 @@ export function MealDrawer({
   const mealFoods = (meal?.meal_food_items || [])
     .map((item) => item.fooditems)
     .filter((item): item is FoodItem => Boolean(item));
-  const relatedFoods = mealFoods.length
-    ? mealFoods
-    : recipe?.foodItems?.length
-      ? recipe.foodItems
+  const relatedFoods = recipe
+    ? recipe.foodItems || []
+    : mealFoods.length
+      ? mealFoods
       : catalog.foodItems.filter(
           (food) =>
             ingredients.some((ingredient) =>
               ingredient.toLowerCase().includes(food.food_name.toLowerCase()),
             ) || name.toLowerCase().includes(food.food_name.toLowerCase()),
         );
+  if (editingRecipe && meal) return <RecipeForm catalog={catalog} mealId={meal.mealID} recipe={recipe} close={() => setEditingRecipe(false)} saved={() => setEditingRecipe(false)} />;
   return (
     <div
       className="drawer-backdrop"
@@ -71,19 +72,21 @@ export function MealDrawer({
               alt=""
             />
           )}
-          <span>Today’s {slot}</span>
+          <span>{mealId ? slot : `Today’s ${slot}`}</span>
           <strong>{name.slice(0, 1)}</strong>
         </div>
         <div className="drawer-body">
           <span className="eyebrow">{recipe?.cuisine || "Home cooking"}</span>
           <h2>{name}</h2>
+          {meal && canManageRecipe && <button className="secondary" onClick={() => setEditingRecipe(true)}>{recipe ? "Edit / delete recipe" : "Create recipe from this meal"}</button>}
+          {!recipe && <p className="muted">No recipe yet. The ingredients and preparation sources below were saved with the meal.</p>}
           {meal?.local_name && (
             <p className="local-name">Also known as {meal.local_name}</p>
           )}
           <p className="lead">
-            {meal?.description ||
-              recipe?.description ||
-              "This meal is on your plan. Add a matching recipe to the database to include ingredients and instructions here."}
+            {recipe?.description ||
+              meal?.description ||
+              "Add a recipe for this meal to include ingredients and cooking instructions here."}
           </p>
           {(recipe?.video_url || meal?.video_url) && (
             <a
@@ -112,11 +115,11 @@ export function MealDrawer({
             </section>
           )}
           <RecipeMeta recipe={recipe} />
-          {(meal?.meal_food_items?.length || ingredients.length > 0) && (
+          {(recipe ? ingredients.length > 0 : Boolean(meal?.meal_food_items?.length)) && (
             <section className="drawer-section">
               <h3>Ingredients</h3>
               <ul className="ingredient-list">
-                {meal?.meal_food_items?.length
+                {!recipe && meal?.meal_food_items?.length
                   ? meal.meal_food_items.map((item) => (
                       <li key={item.food_item_id}>
                         <i />
@@ -138,6 +141,8 @@ export function MealDrawer({
               </ul>
             </section>
           )}
+          {meal?.pronunciation_url && <section className="drawer-section"><h3>Meal pronunciation</h3><audio controls preload="none" src={meal.pronunciation_url} /></section>}
+          {Boolean(meal?.meal_images?.length) && <section className="drawer-section"><h3>Meal photos</h3><div className="mini-grid">{meal?.meal_images?.map(image => <img key={image.id} src={image.image_url} alt={name} style={{ width: "100%", borderRadius: 8 }} />)}</div></section>}
           {meal?.meal_preparation_sources &&
             meal.meal_preparation_sources.length > 0 && (
               <section className="drawer-section">

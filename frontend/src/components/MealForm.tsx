@@ -20,6 +20,7 @@ export default function MealForm({
   saved: (name: string) => void;
 }) {
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [localName, setLocalName] = useState("");
   const [primaryImage, setPrimaryImage] = useState("");
   const [imageUrls, setImageUrls] = useState("");
@@ -69,6 +70,7 @@ export default function MealForm({
     try {
       await createMeal({
         mealName: name.trim(),
+        description: description.trim(),
         local_name: localName.trim() || undefined,
         image_url: primaryImage.trim() || mealImages[0] || undefined,
         video_url: videoUrl.trim() || undefined,
@@ -115,7 +117,7 @@ export default function MealForm({
         <h2>Create meal</h2>
         <p className="modal-copy">
           Combine food items into a named dish. It will become available in
-          every meal-plan slot.
+          every meal-plan slot. Then open the meal to create its recipe; these ingredients and quantities will be filled in for you.
         </p>
         <div className="stack-fields">
           <div className="form-columns">
@@ -152,6 +154,7 @@ export default function MealForm({
               ))}
             </select>
           </label>
+          <label><span>Meal description</span><textarea value={description} onChange={event => setDescription(event.target.value)} /></label>
           <fieldset>
             <legend>Food items involved</legend>
             <p className="field-help">
