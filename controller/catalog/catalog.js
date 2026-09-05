@@ -24,6 +24,7 @@ const foodItemSelect = {
 
 const getMealTypes = () => prisma.mealtype.findMany({
   include: {
+    combination_items: { orderBy: { display_order: "asc" } },
     meal_type_food_items: { include: { fooditems: { select: foodItemSelect } } },
     meal_type_preparation_sources: true,
     meal_type_images: { orderBy: { image_order: "asc" } },

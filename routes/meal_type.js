@@ -10,4 +10,7 @@ router.post('/add', verifyJwt, requireRoles('admin', 'professional'), mealTypeCo
 router.put('/edit/:id', verifyJwt, requireRoles('admin', 'professional'), mealTypeController.saveEditMealType);
 router.delete('/remove/:id', verifyJwt, requireRoles('admin'), mealTypeController.deleteMealType); // DELETE
 
+const combinations = require('../controller/meal_type/combinations');
+router.post('/combinations', verifyJwt, requireRoles('admin', 'professional'), combinations.save);
+router.put('/combinations/:id', verifyJwt, requireRoles('admin', 'professional'), combinations.save);
 module.exports = router;

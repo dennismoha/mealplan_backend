@@ -90,7 +90,11 @@ export type FoodItem = {
   countries?: Country[];
   nutrition?: Nutrition;
 };
+export type CombinationItem = { id?: number; dish_id: string; portions?: string; notes?: string; display_order?: number };
 export type MealType = {
+  meal_kind?: "dish" | "combination";
+  serving_instructions?: string;
+  combination_items?: CombinationItem[];
   idtable1: number;
   mealTypesID: string;
   meal_name: string;
@@ -110,6 +114,9 @@ export type MealAssignment = {
   mealTypesID: string;
 };
 export type Meal = {
+  meal_kind?: "dish" | "combination";
+  serving_instructions?: string;
+  combination_items?: CombinationItem[];
   mealID: string;
   mealName: string;
   local_name?: string;

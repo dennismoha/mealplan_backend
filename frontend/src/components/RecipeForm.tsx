@@ -5,12 +5,12 @@ import type { RootState } from "../store"
 import { useCreateRecipeMutation, useUpdateRecipeMutation, useDeleteRecipeMutation } from "../store/mealPlanApi"
 
 export default function RecipeForm({ catalog, recipe, mealId, close, saved }: { catalog: Catalog; recipe?: Recipe; mealId?: string; close: () => void; saved: () => void }) {
-  const [selected, setSelected] = useState(recipe?.meal_typeID || mealId || catalog.mealTypes[0]?.mealTypesID || "")
+  const [selected, setSelected] = useState(recipe?.meal_typeID || mealId || catalog.mealTypes.find(m => m.meal_kind !== "combination")?.mealTypesID || "")
   const existing = recipe || catalog.recipes.find(r => r.meal_typeID === selected)
   return <div className="modal-backdrop"><div className="modal recipe-form"><button type="button" className="close" onClick={close}>×</button>
     <h2>{existing ? "Manage recipe" : "Create meal recipe"}</h2>
     <p className="modal-copy">Each meal has one recipe. Start with its ingredients, then add the cooking method.</p>
-    <label><span>Meal</span><select disabled={Boolean(recipe || mealId)} value={selected} onChange={e => setSelected(e.target.value)}>{catalog.mealTypes.map(m => <option key={m.mealTypesID} value={m.mealTypesID}>{m.meal_name}{catalog.recipes.some(r => r.meal_typeID === m.mealTypesID) ? " · Recipe exists" : " · Needs recipe"}</option>)}</select></label>
+    <label><span>Meal</span><select disabled={Boolean(recipe || mealId)} value={selected} onChange={e => setSelected(e.target.value)}>{catalog.mealTypes.filter(m => m.meal_kind !== "combination").map(m => <option key={m.mealTypesID} value={m.mealTypesID}>{m.meal_name}{catalog.recipes.some(r => r.meal_typeID === m.mealTypesID) ? " · Recipe exists" : " · Needs recipe"}</option>)}</select></label>
     {selected ? <RecipeEditor key={`${selected}-${existing?.recipe_ID || "new"}`} catalog={catalog} mealId={selected} recipe={existing} close={close} saved={saved} /> : <p>Create a meal before adding its recipe.</p>}
   </div></div>
 }

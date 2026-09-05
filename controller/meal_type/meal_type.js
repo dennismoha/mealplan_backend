@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 const prisma = require('../../models/prisma');
 
 const includeDetails = {
+  combination_items: { orderBy: { display_order: "asc" } },
   meal_type_food_items: { include: { fooditems: true } },
   meal_type_preparation_sources: true,
   meal_type_images: { orderBy: { image_order: 'asc' } },
@@ -36,6 +37,8 @@ exports.createNewMealType = async (req, res) => {
 };
 
 exports.saveEditMealType = async (req, res) => {
+  const existing = await prisma.mealtype.findUnique({ where: { mealTypesID: req.params.id } });
+  if (existing?.meal_kind === 'combination') return res.status(400).json({ message: 'Use the combination editor to update this meal.' });
   const name = req.body.meal_name?.trim();
   if (!name) return res.status(400).json({ message: 'Meal name is required' });
   if (await prisma.mealtype.findFirst({ where: { meal_name: name, mealTypesID: { not: req.params.id } } })) return res.status(409).json({ message: 'Meal exists' });
@@ -44,6 +47,8 @@ exports.saveEditMealType = async (req, res) => {
 };
 
 exports.deleteMealType = async (req, res) => {
-  await prisma.mealtype.delete({ where: { mealTypesID: req.params.id } });
+  if (await prisma.meal_combination_items.count({ where: { dish_id: req.params.id } })) return res.status(409).json({ message: 'This dish is used in a meal combination. Remove it from those combinations first.' });
+  try { await prisma.mealtype.delete({ where: { mealTypesID: req.params.id } }); }
+  catch (error) { if (error.code === 'P2003') return res.status(409).json({ message: 'This meal is referenced by other records and cannot be deleted.' }); throw error; }
   return res.status(200).json({ message: 'Meal deleted successfully' });
 };

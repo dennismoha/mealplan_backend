@@ -27,6 +27,7 @@ async function saveRecipe(tx, body, owner, existing) {
   if (existing && mealId !== existing.meal_typeID) invalid('A recipe cannot be moved to a different meal');
   const meal = await tx.mealtype.findUnique({ where: { mealTypesID: mealId }, include: { meal_type_food_items: true } });
   if (!meal) invalid('Meal not found');
+  if (meal.meal_kind === 'combination') invalid('Combinations reuse their dishes’ recipes. Add or edit a recipe on an individual dish.');
   const duplicate = await tx.recipe.findFirst({ where: { meal_typeID: mealId, ...(existing ? { idrecipe: { not: existing.idrecipe } } : {}) } });
   if (duplicate) throw Object.assign(new Error('This meal already has a recipe. Edit or delete that recipe instead.'), { status: 409 });
   const data = recipeFields(body);

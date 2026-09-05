@@ -1,3 +1,4 @@
+import CombinationForm from "./CombinationForm";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { type DayMeals, type FoodItem } from "../api";
 import { demoPlans } from "../demo";
@@ -67,6 +68,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
   } | null>(null);
   const [foodDetail, setFoodDetail] = useState<FoodItem | null>(null);
   const [showRecipe, setShowRecipe] = useState(false);
+  const [showCombination, setShowCombination] = useState(false);
   const [showMealForm, setShowMealForm] = useState(false);
   const [budgetFilter, setBudgetFilter] = useState<"all" | "budget">("all");
   const user = useSelector((state: RootState) => state.auth.user);
@@ -476,7 +478,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
           </p>
         </section>
 
-        {<DiscoveryStrip showExtras={mode === "public"} catalog={catalog} onMeal={(id, name) => setMealDetail({ name, slot: "meal", id })} />}
+        {<DiscoveryStrip showExtras={mode === "public"} onCreateCombination={user?.role === "admin" || user?.role === "professional" ? () => setShowCombination(true) : undefined} catalog={catalog} onMeal={(id, name) => setMealDetail({ name, slot: "meal", id })} />}
         {mode !== "professional" && (
           <div id="library">
             <CatalogView
@@ -553,7 +555,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
                       )}
                     {catalog.mealSlots.map((meal) => (
                       <option key={meal.mealID} value={meal.mealName}>
-                        {meal.mealName}
+                        {meal.mealName}{meal.meal_kind === "combination" ? " (combination)" : ""}
                         {meal.local_name ? ` · ${meal.local_name}` : ""}
                       </option>
                     ))}
@@ -612,6 +614,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
           }}
         />
       )}
+      {showCombination && <CombinationForm catalog={catalog} close={() => setShowCombination(false)} saved={() => { setShowCombination(false); setToast({ kind: "success", message: "Meal combination saved." }); }} />}
       {showMealForm && (
         <MealForm
           catalog={catalog}

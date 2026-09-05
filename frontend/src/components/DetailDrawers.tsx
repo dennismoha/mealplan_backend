@@ -1,3 +1,4 @@
+import CombinationForm from "./CombinationForm";
 import RecipeForm from "./RecipeForm";
 import { useSelector } from "react-redux";
 import type { RootState } from "../store";
@@ -29,6 +30,7 @@ export function MealDrawer({
   onFood: (food: FoodItem) => void;
 }) {
   const user = useSelector((state: RootState) => state.auth.user);
+  const [editingCombination, setEditingCombination] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState(false);
   const meal = catalog.mealSlots.find(
     (item) => mealId ? item.mealID === mealId : item.mealName.toLowerCase() === name.toLowerCase(),
@@ -55,6 +57,11 @@ export function MealDrawer({
               ingredient.toLowerCase().includes(food.food_name.toLowerCase()),
             ) || name.toLowerCase().includes(food.food_name.toLowerCase()),
         );
+  if (editingCombination && meal) return <CombinationForm catalog={catalog} meal={meal} close={() => setEditingCombination(false)} saved={() => setEditingCombination(false)} />;
+  if (meal?.meal_kind === "combination") return <div className="drawer-backdrop" onMouseDown={e => e.target === e.currentTarget && close()}><aside className="detail-drawer"><button className="close" onClick={close}>×</button><div className="drawer-body"><span className="eyebrow">Meal combination</span><h2>{meal.mealName}</h2>{meal.image_url && <img src={meal.image_url} alt={meal.mealName} style={{ width: "100%" }} />}<p>{meal.description}</p>{canManageRecipe && <button className="secondary" onClick={() => setEditingCombination(true)}>Edit combination</button>}
+    {meal.combination_items?.map(component => { const dish = catalog.mealSlots.find(m => m.mealID === component.dish_id); const dishRecipe = catalog.recipes.find(r => r.meal_typeID === component.dish_id); return <details className="drawer-section" key={component.dish_id}><summary><strong>{dish?.mealName || "Dish"}</strong>{component.portions ? ` · ${component.portions}` : ""}</summary><p>{component.notes}</p><p>{dish?.description}</p><h3>Ingredients</h3><ul>{(dishRecipe ? (dishRecipe.ingredients || "").split(/\r?\n/).filter(Boolean) : dish?.meal_food_items?.map(f => [f.quantity, f.unit, f.fooditems?.food_name, f.preparation_notes].filter(Boolean).join(" ")) || []).map((line, index) => <li key={index}>{line}</li>)}</ul>{dishRecipe ? <><h3>{dishRecipe.title} — Method</h3><ol>{(dishRecipe.instructions || "").split(/\r?\n/).filter(Boolean).map((step, index) => <li key={index}>{step}</li>)}</ol></> : <p>No recipe yet for this dish.</p>}{(dishRecipe?.video_url || dish?.video_url) && <a href={dishRecipe?.video_url || dish?.video_url} target="_blank" rel="noreferrer">Watch preparation →</a>}{dish?.meal_preparation_sources?.map(source => <p key={source.id}><a href={source.source_url} target="_blank" rel="noreferrer">{source.title || source.source_type}</a></p>)}</details> })}
+    {meal.serving_instructions && <section className="drawer-section"><h3>Serve together</h3><p style={{ whiteSpace: "pre-line" }}>{meal.serving_instructions}</p></section>}
+    </div></aside></div>;
   if (editingRecipe && meal) return <RecipeForm catalog={catalog} mealId={meal.mealID} recipe={recipe} close={() => setEditingRecipe(false)} saved={() => setEditingRecipe(false)} />;
   return (
     <div

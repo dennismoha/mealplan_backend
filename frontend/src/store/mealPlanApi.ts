@@ -191,6 +191,10 @@ export const mealPlanApi = createApi({
       query: (body) => ({ url: "/recipes", method: "POST", body }),
       invalidatesTags: ["Catalog"],
     }),
+    saveCombination: builder.mutation<unknown, { id?: string; body: Record<string, unknown> }>({
+      query: ({ id, body }) => ({ url: `/meal-types/combinations${id ? `/${id}` : ""}`, method: id ? "PUT" : "POST", body }),
+      invalidatesTags: ["Catalog"],
+    }),
     createMeal: builder.mutation<unknown, Record<string, unknown>>({
       query: (body) => ({ url: "/meal-types/add", method: "POST", body }),
       invalidatesTags: ["Catalog"],
@@ -254,6 +258,7 @@ export const {
   useDeleteFoodItemMutation,
   useCreateRecipeMutation,
   useCreateMealMutation,
+  useSaveCombinationMutation,
   useUpdateRecipeMutation,
   useDeleteRecipeMutation,
   useCreateCountryMutation,

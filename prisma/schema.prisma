@@ -240,6 +240,10 @@ model meal_images {
 }
 
 model mealtype {
+  meal_kind String @default("dish") @db.VarChar(20)
+  serving_instructions String? @db.Text
+  combination_items meal_combination_items[] @relation("combination")
+  used_in_combinations meal_combination_items[] @relation("dish")
   idtable1                      Int                             @id @default(autoincrement())
   meal_name                     String                          @unique(map: "meal_name_UNIQUE") @db.VarChar(255)
   mealTypesID                   String                          @unique(map: "mealTypesID_UNIQUE") @db.VarChar(36)
@@ -392,4 +396,17 @@ model food_item_local_names {
 
   @@unique([food_item_id, country_id, scope, tribe_name, language_name, name], map: "unique_food_local_name")
   @@index([country_id])
+}
+
+model meal_combination_items {
+  id Int @id @default(autoincrement())
+  combination_id String @db.VarChar(36)
+  dish_id String @db.VarChar(36)
+  portions String? @db.VarChar(100)
+  notes String? @db.Text
+  display_order Int @default(0)
+  combination mealtype @relation("combination", fields: [combination_id], references: [mealTypesID], onDelete: Cascade)
+  dish mealtype @relation("dish", fields: [dish_id], references: [mealTypesID], onDelete: Restrict)
+  @@unique([combination_id, dish_id])
+  @@index([dish_id])
 }

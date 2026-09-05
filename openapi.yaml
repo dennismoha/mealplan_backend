@@ -1610,6 +1610,110 @@ paths:
         '404':
           description: Country or association not found
 
+  /meal-types/combinations:
+    post:
+      tags: [meal-types]
+      summary: Create a combination of reusable dishes
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [meal_name, dishes]
+              properties:
+                meal_name:
+                  type: string
+                  description: Unique name; immutable after creation to preserve planner references.
+                description:
+                  type: string
+                image_url:
+                  type: string
+                serving_instructions:
+                  type: string
+                dishes:
+                  type: array
+                  minItems: 2
+                  description: Distinct individual dishes in display order. Nested combinations are not allowed.
+                  items:
+                    type: object
+                    required: [dish_id]
+                    properties:
+                      dish_id:
+                        type: string
+                      portions:
+                        type: string
+                      notes:
+                        type: string
+      responses:
+        '200':
+          description: Combination updated
+        '201':
+          description: Combination created
+        '400':
+          description: Invalid dishes or combination data
+        '403':
+          description: Administrator or professional access required
+        '409':
+          description: Duplicate name or concurrent change
+
+  /meal-types/combinations/{id}:
+    put:
+      tags: [meal-types]
+      summary: Edit a combination of reusable dishes
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [meal_name, dishes]
+              properties:
+                meal_name:
+                  type: string
+                  description: Unique name; immutable after creation to preserve planner references.
+                description:
+                  type: string
+                image_url:
+                  type: string
+                serving_instructions:
+                  type: string
+                dishes:
+                  type: array
+                  minItems: 2
+                  description: Distinct individual dishes in display order. Nested combinations are not allowed.
+                  items:
+                    type: object
+                    required: [dish_id]
+                    properties:
+                      dish_id:
+                        type: string
+                      portions:
+                        type: string
+                      notes:
+                        type: string
+      responses:
+        '200':
+          description: Combination updated
+        '201':
+          description: Combination created
+        '400':
+          description: Invalid dishes or combination data
+        '403':
+          description: Administrator or professional access required
+        '409':
+          description: Duplicate name or concurrent change
+
 components:
   securitySchemes:
     bearerAuth:
