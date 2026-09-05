@@ -37,4 +37,6 @@ router.get('/:id/pronunciation', foodItemsController.getPronunciation);
 router.put('/:id/pronunciation', verifyJwt, requireRoles('admin'), foodItemsController.savePronunciation);
 router.delete('/:id/pronunciation', verifyJwt, requireRoles('admin'), foodItemsController.deletePronunciation);
 
+router.put('/:id/local-names/:nameId/pronunciation', verifyJwt, requireRoles('admin'), foodItemsController.saveLocalNamePronunciation);
+
 module.exports = router;

@@ -820,6 +820,11 @@ paths:
                 english_name:
                   type: string
                   example: "Banana"
+                local_names:
+                  type: array
+                  description: Optional countrywide, tribal, or official-language names. Defaults to an empty array.
+                  items:
+                    $ref: '#/components/schemas/FoodLocalName'
                 local_name:
                   type: string
                   nullable: true
@@ -1706,6 +1711,41 @@ components:
         source:
           type: string
           nullable: true
+    FoodLocalName:
+      type: object
+      required: [country_id, name, scope]
+      properties:
+        pronunciation_audio:
+          type: string
+          writeOnly: true
+          description: Optional base64 audio data URL for this specific name.
+        pronunciation_url:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Playback URL of this name's pronunciation.
+        country_id:
+          type: integer
+          minimum: 1
+          description: ID of an existing country.
+        name:
+          type: string
+          maxLength: 255
+        scope:
+          type: string
+          enum: [countrywide, tribal, official_language]
+        tribe_name:
+          type: string
+          maxLength: 100
+          description: Required for tribal names; empty or omitted otherwise.
+        language_name:
+          type: string
+          maxLength: 100
+          description: Required for official_language names; empty or omitted otherwise.
+        country:
+          type: object
+          readOnly: true
+          description: Country details included in food item responses.
     CatalogFoodItem:
       type: object
       properties:
@@ -1719,6 +1759,10 @@ components:
           description: Legacy alias for english_name
         english_name:
           type: string
+        local_names:
+          type: array
+          items:
+            $ref: '#/components/schemas/FoodLocalName'
         local_name:
           type: string
           nullable: true
@@ -2191,6 +2235,10 @@ components:
         english_name:
           type: string
           example: "Maize"
+        local_names:
+          type: array
+          items:
+            $ref: '#/components/schemas/FoodLocalName'
         local_name:
           type: string
           nullable: true

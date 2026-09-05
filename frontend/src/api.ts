@@ -63,7 +63,19 @@ export type Country = {
   description?: string;
   image_url?: string;
 };
+export type FoodLocalName = {
+  pronunciation_audio?: string;
+  pronunciation_url?: string;
+  id?: number;
+  country_id: number;
+  name: string;
+  scope: "countrywide" | "tribal" | "official_language";
+  tribe_name?: string;
+  language_name?: string;
+  country?: Country;
+};
 export type FoodItem = {
+  local_names?: FoodLocalName[];
   idFoodItems: number;
   food_itemID: string;
   fooditem_cacheID?: string;

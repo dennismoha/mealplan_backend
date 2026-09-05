@@ -7,6 +7,7 @@ const foodItemSelect = {
   idFoodItems: true,
   food_name: true,
   local_name: true,
+  local_names: { include: { country: true }, orderBy: { id: "asc" } },
   descriptionl: true,
   image_url: true,
   video_url: true,

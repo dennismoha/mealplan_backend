@@ -14,6 +14,7 @@ model countries {
   image_url   String?    @db.Text
   created_at  DateTime?  @default(now()) @db.DateTime(0)
   updated_at  DateTime?  @default(now()) @db.DateTime(0)
+  food_local_names food_item_local_names[]
   meals       meals[]
   mealtype    mealtype[]
 }
@@ -54,6 +55,7 @@ model fooditems {
   idFoodItems          Int                    @id @default(autoincrement())
   food_name            String                 @unique(map: "Name_UNIQUE") @db.VarChar(100)
   english_name         String?                @unique(map: "EnglishName_UNIQUE") @db.VarChar(100)
+  local_names          food_item_local_names[]
   local_name           String?                @db.VarChar(255)
   descriptionl         String?                @db.Text
   image_url            String?                @db.Text
@@ -373,4 +375,21 @@ model users {
   roles                  roles?         @relation(fields: [role], references: [role_type], onDelete: NoAction, onUpdate: NoAction, map: "role")
 
   @@index([role], map: "role_idx")
+}
+
+model food_item_local_names {
+  pronunciation_url String? @db.Text
+  pronunciation_public_id String? @db.VarChar(255)
+  id           Int       @id @default(autoincrement())
+  food_item_id String    @db.VarChar(36)
+  country_id   Int
+  name         String    @db.VarChar(255)
+  scope        String    @db.VarChar(20)
+  tribe_name   String    @default("") @db.VarChar(100)
+  language_name String   @default("") @db.VarChar(100)
+  fooditem     fooditems @relation(fields: [food_item_id], references: [food_itemID], onDelete: Cascade)
+  country      countries @relation(fields: [country_id], references: [id], onDelete: Restrict)
+
+  @@unique([food_item_id, country_id, scope, tribe_name, language_name, name], map: "unique_food_local_name")
+  @@index([country_id])
 }

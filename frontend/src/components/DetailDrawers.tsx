@@ -1,3 +1,4 @@
+import { LocalNamesList } from "./FoodLocalNames";
 import type { Catalog, FoodItem, Recipe } from "../api";
 import { FoodImage } from "./CatalogView";
 import { useDeleteFoodPronunciationMutation, useGetFoodPronunciationQuery } from "../store/mealPlanApi";
@@ -254,9 +255,7 @@ export function FoodDrawer({
             {subcategory ? ` · ${subcategory.subcategory_name}` : ""}
           </span>
           <h2>{item.english_name || item.food_name}</h2>
-          {item.local_name && (
-            <p className="local-name">Local name: {item.local_name}</p>
-          )}
+          <LocalNamesList item={item} playback canManage={canManage} />
           <p className="lead">
             {item.descriptionl ||
               "No description has been added for this ingredient yet."}

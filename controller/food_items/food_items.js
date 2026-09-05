@@ -1,3 +1,4 @@
+const { validateLocalNames } = require("../../globals/helpers/food_local_names");
 /* eslint-disable camelcase */
 const { StatusCodes } = require("http-status-codes");
 const cloudinary = require('cloudinary').v2;
@@ -15,7 +16,6 @@ const {
 } = require("#mealplan/globals/services/redis/food_item_cache.js");
 const foodItemQueue = require("#mealplan/globals/services/queues/food-item.js");
 const {
-  FOOD_ITEM_SET,
   UPDATEFOODITEMQUEUE,
   DELETEFOODITEMQUEUE,
 } = require("#mealplan/constants.js");
@@ -50,6 +50,15 @@ exports.createFoodItem = async (req, res) => {
   // food_name remains populated as a compatibility alias for older clients.
   const food_name = english_name;
   const local_name = req.body.local_name?.trim() || null;
+  let localNames;
+  try {
+    localNames = validateLocalNames(req.body.local_names);
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+  const countryIds = [...new Set(localNames.map(entry => entry.country_id))];
+  const countries = await prisma.countries.findMany({ where: { id: { in: countryIds } }, select: { id: true } });
+  if (countries.length !== countryIds.length) return res.status(400).json({ message: "Choose an existing country for every local name" });
   const category_id = req.body.category_id;
   const foodsubcategory_id = req.body.foodsubcategory_id;
 
@@ -81,10 +90,24 @@ exports.createFoodItem = async (req, res) => {
     }
     pronunciation = await uploadAudio(req.body.pronunciation_audio);
   }
-  const foodItem = await foodItemDB.addFoodItemToDB({
+  const uploaded = [];
+  let foodItem;
+  try {
+    const namesWithAudio = [];
+    for (const { pronunciation_audio, ...entry } of localNames) {
+      if (pronunciation_audio) {
+        const recording = await uploadAudio(pronunciation_audio);
+        uploaded.push(recording.public_id);
+        entry.pronunciation_url = recording.secure_url;
+        entry.pronunciation_public_id = recording.public_id;
+      }
+      namesWithAudio.push(entry);
+    }
+    foodItem = await foodItemDB.addFoodItemToDB({
     food_name,
     english_name,
     local_name,
+    local_names: { create: namesWithAudio },
     pronunciation_url: pronunciation?.secure_url || null,
     pronunciation_public_id: pronunciation?.public_id || null,
     descriptionl: req.body.descriptionl?.trim() || null,
@@ -94,27 +117,21 @@ exports.createFoodItem = async (req, res) => {
     fooditem_cacheID: cacheId,
   });
 
+  } catch (error) {
+    if (pronunciation?.public_id) uploaded.push(pronunciation.public_id);
+    await Promise.allSettled(uploaded.map(public_id => cloudinary.uploader.destroy(public_id, { resource_type: "video" })));
+    throw error;
+  }
+
   // The database is authoritative. A cache outage must not roll back a valid
   // food item or cause the API to claim success before persistence finishes.
   await foodItemRedis.saveFoodItemToCache(cacheId, foodItem);
   return res.status(201).json({ message: "added food item", data: foodItem });
 };
 
-/*
-      Get all food items
-      fetch from cache if not available fetch from db
-*/
+// Read complete food records from the database; legacy cache entries omit local names.
 exports.getAllFoodItems = async (req, res) => {
-  // will add pagination later
-  let result = await foodItemRedis.selectAllFoodItemFromCache(
-    FOOD_ITEM_SET,
-    0,
-    -1
-  );
-
-  if (result.length === 0) {
-    result = await foodItemDB.fetchFoodItemsFromDb();
-  }
+  const result = await foodItemDB.fetchFoodItemsFromDb();
 
   return res
     .status(StatusCodes.OK)
@@ -196,16 +213,7 @@ exports.getPronunciation = async (req, res) => {
 
 // Get a specific food item by ID
 exports.getFoodItemById = async (req, res) => {
-  // get food item from cache
-  let foodItem = await foodItemRedis.selectSingleFoodItemFromCache(
-    req.params.id
-  );
-  console.log('food item length is ', foodItem)
-  ///fetch from db if items is 0
-  if (foodItem.length === 0) {
-    console.log('fetching from db')
-    foodItem = await foodItemDB.fetchSingleFoodItemsFromDb(req.params.id);
-  }
+  const foodItem = await foodItemDB.fetchSingleFoodItemsFromDb(req.params.id);
 
 
   return res
@@ -262,4 +270,27 @@ exports.deleteFoodItemById = async (req, res) => {
   await foodItemQueue.addFoodItemJob(DELETEFOODITEMQUEUE, req.params.id);
 
   res.status(200).json({ message: "Food item deleted successfully" });
+};
+
+// A name ID is always scoped to its food item to prevent cross-food updates.
+exports.saveLocalNamePronunciation = async (req, res) => {
+  const id = Number(req.params.nameId);
+  if (!Number.isSafeInteger(id) || id < 1) return res.status(400).json({ message: "Invalid local name ID" });
+  const audio = req.body.audio;
+  if (audio !== null && !isAudioDataUrl(audio)) return res.status(400).json({ message: "A valid audio recording is required" });
+  const name = await prisma.food_item_local_names.findFirst({ where: { id, food_item_id: req.params.id } });
+  if (!name) return res.status(404).json({ message: "Local name not found" });
+  const uploaded = audio === null ? null : await uploadAudio(audio);
+  let updated;
+  try {
+    updated = await prisma.food_item_local_names.update({ where: { id }, data: {
+      pronunciation_url: uploaded?.secure_url || null,
+      pronunciation_public_id: uploaded?.public_id || null,
+    }, include: { country: true } });
+  } catch (error) {
+    if (uploaded) await Promise.allSettled([cloudinary.uploader.destroy(uploaded.public_id, { resource_type: "video" })]);
+    throw error;
+  }
+  if (name.pronunciation_public_id) await Promise.allSettled([cloudinary.uploader.destroy(name.pronunciation_public_id, { resource_type: "video", invalidate: true })]);
+  return res.json({ data: updated });
 };

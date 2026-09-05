@@ -5,6 +5,7 @@ const legacyFoodItemSelect = {
   idFoodItems: true,
   food_name: true,
   local_name: true,
+  local_names: { include: { country: true }, orderBy: { id: "asc" } },
   descriptionl: true,
   image_url: true,
   video_url: true,
@@ -22,7 +23,7 @@ const legacyFoodItemSelect = {
 const withEnglishName = food => ({ ...food, english_name: food.food_name });
 
 class FoodItemDB {
-  async addFoodItemToDB(data) { return prisma.fooditems.create({ data: { ...data, food_itemID: data.food_itemID || uuidv4() } }); }
+  async addFoodItemToDB(data) { return prisma.fooditems.create({ data: { ...data, food_itemID: data.food_itemID || uuidv4() }, include: { local_names: { include: { country: true } } } }); }
   async fetchFoodItemsFromDb() {
     const foods = await prisma.fooditems.findMany({ select: legacyFoodItemSelect, orderBy: { food_name: 'asc' } });
     return foods.map(withEnglishName);
