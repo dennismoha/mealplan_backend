@@ -1,9 +1,10 @@
+const { profileData, profileView, fields } = require('../../globals/helpers/professional_profile');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const prisma = require('../../models/prisma');
 const { accessTokenSecret, refreshTokenSecret } = require('../../config/token_secrets');
 
-const publicUser = user => ({ id: user.idusers, email: user.email, role: user.role, status: user.userscol || 'active', createdAt: user.created_at });
+const publicUser = user => ({ ...profileView(user), id: user.idusers, email: user.email, role: user.role, status: user.userscol || 'active', createdAt: user.created_at });
 const makeAccessToken = user => jwt.sign({ userId: user.idusers, email: user.email, role: user.role }, accessTokenSecret, { expiresIn: '1h' });
 const makeRefreshToken = user => jwt.sign({ userId: user.idusers, email: user.email, role: user.role }, refreshTokenSecret, { expiresIn: '7d' });
 const setRefreshCookie = (res, token) => res.cookie('jwt', token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 7 * 24 * 60 * 60 * 1000 });
@@ -17,10 +18,6 @@ exports.createUser = async (req, res) => {
 };
 exports.userLogin = async (req, res) => {
   const user = await prisma.users.findUnique({ where: { email: req.body.userEmail.toLowerCase() } });
-  console.log('user is ', user);
-  const k = await bcrypt.compare(req.body.password, user?.password);
-
-  console.log('k is ', k);
   if (!user || !(await bcrypt.compare(req.body.password, user.password))) return res.status(401).json({ message: 'Email or password is incorrect' });
   if (user.userscol === 'revoked') return res.status(403).json({ message: 'This account has been revoked' });
   const token = makeAccessToken(user); const refresh = makeRefreshToken(user); await prisma.users.update({ data: { refresh_token: refresh }, where: { idusers: user.idusers } }); setRefreshCookie(res, refresh);
@@ -31,9 +28,10 @@ exports.listUsers = async (req, res) => res.json({ users: (await prisma.users.fi
 exports.adminCreateUser = async (req, res) => {
   const { email, password, role = 'user' } = req.body;
   if (!email || !password || !['user', 'professional', 'admin'].includes(role)) return res.status(400).json({ message: 'Email, password and a valid role are required' });
+  const profile = profileData(req.body, role === 'professional');
   await prisma.roles.upsert({ where: { role_type: role }, update: {}, create: { role_type: role } });
   if (await prisma.users.findUnique({ where: { email: email.toLowerCase() } })) return res.status(409).json({ message: 'User already exists' });
-  const user = await prisma.users.create({ data: { email: email.toLowerCase(), password: await bcrypt.hash(password, 10), role, userscol: 'active' } });
+  const user = await prisma.users.create({ data: { ...profile, email: email.toLowerCase(), password: await bcrypt.hash(password, 10), role, userscol: 'active' } });
   return res.status(201).json({ user: publicUser(user) });
 };
 exports.updateUserAccess = async (req, res) => {
@@ -41,8 +39,10 @@ exports.updateUserAccess = async (req, res) => {
   const { role, status } = req.body;
   if (role && !['user', 'professional', 'admin'].includes(role)) return res.status(400).json({ message: 'Invalid role' });
   if (status && !['active', 'revoked'].includes(status)) return res.status(400).json({ message: 'Invalid status' });
+  const editingProfile = fields.some(key => req.body[key] !== undefined);
+  const profile = profileData(req.body, editingProfile && (role || user.role) === 'professional');
   if (role) await prisma.roles.upsert({ where: { role_type: role }, update: {}, create: { role_type: role } });
-  const updated = await prisma.users.update({ where: { idusers: id }, data: { ...(role && { role }), ...(status && { userscol: status }), ...(status === 'revoked' && { refresh_token: null }) } });
+  const updated = await prisma.users.update({ where: { idusers: id }, data: { ...profile, ...(role && { role }), ...(status && { userscol: status }), ...(status === 'revoked' && { refresh_token: null }) } });
   return res.json({ user: publicUser(updated) });
 };
 exports.handleLogout = async (req, res) => { const token = req.cookies?.jwt; if (token) await prisma.users.updateMany({ data: { refresh_token: null }, where: { refresh_token: token } }); res.clearCookie('jwt', { httpOnly: true, sameSite: 'lax' }); return res.sendStatus(204); };

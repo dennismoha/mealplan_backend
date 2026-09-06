@@ -1,3 +1,5 @@
+import { ProfileFields, ProfileEditor, profileDraft, profileBody } from "./ProfessionalProfileForm";
+import type { SessionUser } from "../features/auth/authSlice";
 import { FormEvent, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
@@ -161,7 +163,6 @@ export function AuthModal({
             confirm_password: password,
           }).unwrap()
         : await login({ userEmail: email, password }).unwrap();
-      console.log('result is ', result)
       dispatch(setCredentials(result));
       close();
       // Navigate to appropriate dashboard based on role
@@ -252,6 +253,7 @@ export function AdminPanel() {
   const [update] = useUpdateUserMutation();
   const [create] = useCreateUserMutation();
   const [showCreate, setShowCreate] = useState(false);
+  const [profileUser, setProfileUser] = useState<SessionUser | null>(null);
   if (user?.role !== "admin") return null;
   return (
     <section className="admin-panel" id="admin">
@@ -280,7 +282,8 @@ export function AdminPanel() {
             <div className="user-row" key={item.id}>
               <span>
                 <strong>{item.email}</strong>
-                <small>#{item.id}</small>
+                <small>#{item.id} {[item.first_name, item.last_name].filter(Boolean).join(" ")}</small>
+                {item.role === "professional" && <button type="button" onClick={() => setProfileUser(item)}>Edit profile</button>}
               </span>
               <select
                 value={item.role}
@@ -307,6 +310,7 @@ export function AdminPanel() {
           ))}
         </div>
       )}
+      {profileUser && <ProfileEditor profile={profileUser} save={body => update({ id: profileUser.id, ...body }).unwrap()} close={() => setProfileUser(null)} />}
       {showCreate && (
         <CreateUser close={() => setShowCreate(false)} create={create} />
       )}
@@ -324,10 +328,14 @@ function CreateUser({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("user");
+  const [profile, setProfile] = useState(profileDraft());
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    await create({ email, password, role }).unwrap();
-    close();
+    setBusy(true); setError("");
+    try { await create({ email, password, role, ...(role === "professional" ? profileBody(profile) : {}) }).unwrap(); close(); }
+    catch (e) { setError((e as { data?: { message?: string } }).data?.message || "Could not create user"); } finally { setBusy(false); }
   };
   return (
     <div className="modal-backdrop">
@@ -366,12 +374,14 @@ function CreateUser({
             </select>
           </label>
         </div>
+        {role === "professional" && <ProfileFields value={profile} change={setProfile} />}
+        {error && <p role="alert">{error}</p>}
         <div className="modal-actions">
           <span />
           <button type="button" className="secondary" onClick={close}>
             Cancel
           </button>
-          <button className="primary">Create</button>
+          <button className="primary" disabled={busy}>Create</button>
         </div>
       </form>
     </div>

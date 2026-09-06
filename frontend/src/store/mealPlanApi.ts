@@ -83,6 +83,7 @@ export const mealPlanApi = createApi({
         response.data || emptyCatalog,
       providesTags: ["Catalog"],
     }),
+    updatePlanDescription: builder.mutation<unknown, { id: number; description: string }>({ query: ({ id, description }) => ({ url: `/meal/meal-plan/time-intervals/${id}`, method: "PUT", body: { description } }), invalidatesTags: ["Plans"] }),
     createInterval: builder.mutation<
       { data: MealPlanInterval },
       {
@@ -255,6 +256,7 @@ export const {
   useGetPlansQuery,
   useGetCatalogQuery,
   useCreateIntervalMutation,
+  useUpdatePlanDescriptionMutation,
   useSaveDayMutation,
   useDeleteDayMutation,
   useCreateCategoryMutation,

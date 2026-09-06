@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit"
 
-export type SessionUser = { id: number; email: string; role: "user" | "professional" | "admin"; status: string; createdAt?: string }
+export type SessionUser = { first_name?: string; last_name?: string; jobs?: string[]; bio?: string; image_url?: string; id: number; email: string; role: "user" | "professional" | "admin"; status: string; createdAt?: string }
 type AuthState = { token: string | null; user: SessionUser | null; initialized: boolean }
 const initialState: AuthState = { token: null, user: null, initialized: false }
 

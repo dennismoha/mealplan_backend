@@ -23,6 +23,7 @@ function mealPlanTimeData(body, partial = false) {
     if (!BUDGET_LEVELS.has(budget)) throw new BadRequestError('Invalid budget level');
     data.budget_level = budget;
   }
+  if (body.description !== undefined && typeof body.description !== 'string') throw new BadRequestError('Description must be text');
   if (!partial || body.description !== undefined) data.description = body.description?.trim() || null;
   if (!partial || body.estimatedCost !== undefined) {
     const cost = body.estimatedCost === '' || body.estimatedCost == null ? null : Number(body.estimatedCost);
@@ -49,6 +50,8 @@ exports.getMealplanTime = async (req, res) => {
 
 exports.createMealplanTime = async (req, res) => {
   const data = mealPlanTimeData(req.body);
+  const owner = await prisma.users.findUnique({ where: { idusers: Number(req.userId) }, select: { role: true } });
+  if (owner?.role === 'professional' && (!data.description || data.description.length < 10)) throw new BadRequestError('Professional meal plans need a description of at least 10 characters');
   if (await prisma.mealplantime.findUnique({ where: { meal_plan_name: data.meal_plan_name } })) throw new ConflictError('Meal plan with the same name already exists');
   const created = await prisma.mealplantime.create({ data: { ...data, owner_user_id: req.userId } });
   return res.status(201).send(getSuccessMessage(201, created, 'Successfully created a meal plan'));
@@ -58,6 +61,9 @@ exports.updateMealplanTime = async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) throw new BadRequestError('Invalid meal plan id');
   const data = mealPlanTimeData(req.body, true);
+  const existing = await prisma.mealplantime.findUnique({ where: { idmealPlanWeek: id }, include: { users: { select: { role: true } } } });
+  const description = data.description !== undefined ? data.description : existing?.description;
+  if (existing?.users?.role === 'professional' && (!description || description.trim().length < 10)) throw new BadRequestError('Professional meal plans need a description of at least 10 characters');
   if (data.meal_plan_name && await prisma.mealplantime.findFirst({ where: { meal_plan_name: data.meal_plan_name, idmealPlanWeek: { not: id } } })) throw new ConflictError('Meal plan with the same name already exists');
   const updated = await prisma.mealplantime.update({ data, where: { idmealPlanWeek: id } });
   return res.status(200).send(getSuccessMessage(200, updated, 'Successfully updated'));

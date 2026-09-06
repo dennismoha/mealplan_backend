@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { useSelector } from "react-redux"
 import { Navigate, Route, Routes } from "react-router-dom"
 import type { SessionUser } from "./features/auth/authSlice"
+import ProfessionalsPage, { ProfessionalPlansPage } from "./pages/ProfessionalsPage"
 import AdminPage from "./pages/AdminPage"
 import HomePage from "./pages/HomePage"
 import ProfessionalPage from "./pages/ProfessionalPage"
@@ -20,6 +21,8 @@ function RoleRoute({ roles, children }: { roles: SessionUser["role"][]; children
 export default function AppRouter() {
   return <Routes>
     <Route path="/" element={<HomePage />} />
+    <Route path="/professionals" element={<ProfessionalsPage />} />
+    <Route path="/professionals/:id" element={<ProfessionalPlansPage />} />
     <Route path="/signin" element={<SignInPage />} />
     <Route path="/register" element={<RegisterPage />} />
     <Route path="/professional" element={<RoleRoute roles={["professional"]}><ProfessionalPage /></RoleRoute>} />

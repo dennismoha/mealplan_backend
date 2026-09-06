@@ -5,7 +5,7 @@ const BadRequestError = require("#mealplan/middlewares/custom_errors/bad_request
 // Validation middleware for create and update operations
 exports.validateMealplanTime = (req, res, next) => {
   // Express Validator checks for missing data
-  req.check('mealPlanName', 'Meal plan name cannot be empty').notEmpty().trim();
+  if (req.method === 'POST' || req.body.mealPlanName !== undefined) req.check('mealPlanName', 'Meal plan name cannot be empty').notEmpty().trim();
 
   const errors = req.validationErrors();
 

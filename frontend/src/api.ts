@@ -1,3 +1,4 @@
+export type ProfessionalProfile = { id: number; first_name?: string; last_name?: string; jobs?: string[]; bio?: string; image_url?: string; plan_count?: number };
 export type MealSlot = "breakfast" | "morning_break" | "lunch" | "evening_break" | "supper";
 export type PlanPortion = { servings: number; instructions?: string; components?: Record<string, number> };
 export type DayMeals = {

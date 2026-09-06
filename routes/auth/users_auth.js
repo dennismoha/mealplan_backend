@@ -6,6 +6,11 @@ const { requireRoles } = require('../../middlewares/validator/auth/user_role_che
 // const auth = require('../../config/auth_token')
 
 const router = express.Router();
+const professionals = require('../../controller/user_auth/professionals');
+router.get('/professionals', professionals.list);
+router.get('/professionals/me', verifyJwt, requireRoles('professional'), professionals.own);
+router.put('/professionals/me', verifyJwt, requireRoles('professional'), professionals.saveOwn);
+router.get('/professionals/:id', professionals.detail);
 
 // @RULE: REGISTER USER
 router.post('/register', userSignupValidator, User.createUser);

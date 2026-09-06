@@ -390,6 +390,11 @@ model sessions {
 }
 
 model users {
+  first_name String? @db.VarChar(100)
+  last_name String? @db.VarChar(100)
+  jobs Json?
+  bio String? @db.Text
+  image_url String? @db.Text
   idusers                Int            @id @default(autoincrement())
   email                  String         @unique(map: "email_UNIQUE") @db.VarChar(45)
   password               String         @db.Text

@@ -1,9 +1,10 @@
+import PlanDescriptionEditor from "./PlanDescriptionEditor";
 import FoodPrices from "./FoodPrices";
 import TaxonomyManager from "./TaxonomyManager";
 import TotalsPanel from "./TotalsPanel";
 import CombinationForm from "./CombinationForm";
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { type DayMeals, type FoodItem, type MealSlot, type PlanPortion } from "../api";
+import { FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
+import { type DayMeals, type FoodItem, type MealSlot, type PlanPortion, type MealPlan } from "../api";
 import { demoPlans } from "../demo";
 import CatalogView from "./CatalogView";
 import { FoodDrawer, MealDrawer } from "./DetailDrawers";
@@ -55,7 +56,7 @@ const SLOTS: { key: MealSlot; label: string; icon: string }[] = [
 type Toast = { kind: "success" | "error"; message: string };
 export type WorkspaceMode = "public" | "professional" | "admin";
 
-export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
+export default function App({ mode = "public", suppliedPlans, introduction }: { mode?: WorkspaceMode; suppliedPlans?: MealPlan[]; introduction?: ReactNode }) {
   const [selectedKey, setSelectedKey] = useState("");
   const [editor, setEditor] = useState<{
     day: string;
@@ -76,11 +77,11 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
   const [budgetFilter, setBudgetFilter] = useState<"all" | "budget">("all");
   const user = useSelector((state: RootState) => state.auth.user);
 
-  const plansQuery = useGetPlansQuery(user && user.role !== "admin" ? "mine" : "all");
+  const plansQuery = useGetPlansQuery(user && user.role !== "admin" ? "mine" : "all", { skip: suppliedPlans !== undefined });
   const catalogQuery = useGetCatalogQuery();
   const [saveDayMutation, saveState] = useSaveDayMutation();
   const [deleteDayMutation, deleteState] = useDeleteDayMutation();
-  const allPlans = plansQuery.data || (plansQuery.isError ? demoPlans : []);
+  const allPlans = suppliedPlans ?? plansQuery.data ?? (plansQuery.isError ? demoPlans : []);
   const plans =
     mode === "public" && budgetFilter === "budget"
       ? allPlans.filter((item) => item.budgetLevel === "budget")
@@ -95,12 +96,12 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
     recipes: [],
     countries: [],
   };
-  const offline = plansQuery.isError;
+  const offline = suppliedPlans === undefined && plansQuery.isError;
   const catalogOffline = catalogQuery.isError;
-  const loading = plansQuery.isLoading;
+  const loading = suppliedPlans === undefined && plansQuery.isLoading;
   const saving = saveState.isLoading || deleteState.isLoading;
   const canCreatePlans =
-    Boolean(user);
+    suppliedPlans === undefined && Boolean(user);
 
   useEffect(() => {
     if (!plans.length) return;
@@ -118,8 +119,8 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
     [plans, selectedKey],
   );
   const canManageSelectedPlan =
-    user?.role === "admin" ||
-    (Boolean(user) && plan?.ownerUserId === user?.id);
+    suppliedPlans === undefined && (user?.role === "admin" ||
+    (Boolean(user) && plan?.ownerUserId === user?.id));
   const days =
     plan && typeof plan.data !== "string" ? plan.data.daysOfWeek : {};
   const filled = DAYS.filter((day) => days[day]).length;
@@ -272,7 +273,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
       )}
 
       <main id="top">
-        {mode === "public" && (
+        {mode === "public" && suppliedPlans === undefined && (
           <PublicHero
             plans={allPlans.length}
             foods={catalog.foodItems.length}
@@ -335,6 +336,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
           </header>
         )}
 
+        {introduction}
         {offline && (
           <div className="notice">
             <span>Preview mode</span> The API is unavailable, so you’re seeing
@@ -492,8 +494,10 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
           </p>
         </section>
 
+        {plan && <section className="drawer-section"><h3>About this meal plan</h3><p style={{ whiteSpace: "pre-wrap" }}>{plan.description || "No description has been added yet."}</p>{canManageSelectedPlan && <PlanDescriptionEditor key={plan.idmealPlanWeek} plan={plan} />}</section>}
         {plan && !offline && <TotalsPanel kind="plan" id={String(plan.idmealPlanWeek)} estimate={plan.estimatedCost} currency={plan.currency} />}
         <FoodPrices catalog={catalog} canManage={user?.role === "admin"} />
+        {suppliedPlans === undefined && <>
         {user?.role === "admin" && <TaxonomyManager catalog={catalog} />}
         {<DiscoveryStrip showExtras={mode === "public"} onCreateCombination={user?.role === "admin" || user?.role === "professional" ? () => setShowCombination(true) : undefined} catalog={catalog} onMeal={(id, name) => setMealDetail({ name, slot: "meal", id })} />}
         {mode !== "professional" && (
@@ -516,6 +520,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
           />
         )}
         {mode === "admin" && <AdminPanel />}
+        </>}
 
         <footer>
           <span>Plateful</span>
