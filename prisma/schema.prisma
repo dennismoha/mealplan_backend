@@ -1,0 +1,443 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model countries {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique(map: "name") @db.VarChar(100)
+  code        String     @unique(map: "code") @db.VarChar(3)
+  description String?    @db.Text
+  image_url   String?    @db.Text
+  created_at  DateTime?  @default(now()) @db.DateTime(0)
+  updated_at  DateTime?  @default(now()) @db.DateTime(0)
+  food_local_names food_item_local_names[]
+  meals       meals[]
+  mealtype    mealtype[]
+}
+
+model food_item_countries {
+  id           Int    @id @default(autoincrement())
+  food_item_id String @db.Char(36)
+  country_id   Int
+}
+
+model food_nutrition {
+  price_checked_at DateTime? @db.Date
+  price_source String? @db.VarChar(255)
+  price_location String? @db.VarChar(150)
+  price_per_100g Decimal? @db.Decimal(10, 2)
+  currency String @default("KES") @db.VarChar(3)
+  id              Int       @id @default(autoincrement())
+  food_item_id    String    @unique(map: "food_item_id") @db.Char(36)
+  serving_size_g  Decimal?  @db.Decimal(8, 2)
+  energy_kcal     Decimal?  @db.Decimal(8, 2)
+  protein_g       Decimal?  @db.Decimal(8, 2)
+  carbohydrates_g Decimal?  @db.Decimal(8, 2)
+  fat_g           Decimal?  @db.Decimal(8, 2)
+  fiber_g         Decimal?  @db.Decimal(8, 2)
+  source          String?   @db.VarChar(255)
+  updated_at      DateTime? @default(now()) @db.DateTime(0)
+}
+
+model foodcategory {
+  idFoodCategory  Int               @id @default(autoincrement())
+  category_name   String            @unique(map: "category_name_UNIQUE") @db.VarChar(45)
+  description     String?           @db.MediumText
+  image_url       String?           @db.Text
+  food_categoryID String            @unique(map: "food_categoryID_UNIQUE") @db.VarChar(36)
+  created_on      DateTime?         @default(now()) @db.DateTime(0)
+  updated_on      DateTime?         @default(now()) @db.DateTime(0)
+  fooditems       fooditems[]
+  foodsubcategory foodsubcategory[]
+  images          images[]
+}
+
+model fooditems {
+  idFoodItems          Int                    @id @default(autoincrement())
+  food_name            String                 @unique(map: "Name_UNIQUE") @db.VarChar(100)
+  english_name         String?                @unique(map: "EnglishName_UNIQUE") @db.VarChar(100)
+  local_names          food_item_local_names[]
+  local_name           String?                @db.VarChar(255)
+  descriptionl         String?                @db.Text
+  image_url            String?                @db.Text
+  video_url            String?                @db.Text
+  pronunciation_url    String?                @db.Text
+  pronunciation_public_id String?             @db.VarChar(255)
+  nutrient_description String?                @db.Text
+  food_itemID          String                 @unique(map: "food_itemID_UNIQUE") @db.VarChar(36)
+  category_id          String?                @db.VarChar(36)
+  fooditem_cacheID     String?                @db.VarChar(100)
+  created_at           DateTime?              @default(now()) @db.Timestamp(0)
+  updated_at           DateTime?              @default(now()) @db.Timestamp(0)
+  foodsubcategory_id   String                 @db.VarChar(36)
+  foodcategory         foodcategory?          @relation(fields: [category_id], references: [food_categoryID], map: "foodcategory")
+  foodsubcategory      foodsubcategory        @relation(fields: [foodsubcategory_id], references: [foodsubcategory_id], onDelete: NoAction, onUpdate: NoAction, map: "foodsubcat")
+  fooditemsimages      fooditemsimages[]
+  meal_food_items      meal_food_items[]
+  meal_type_food_items meal_type_food_items[]
+
+  @@index([category_id], map: "foodcategory_idx")
+  @@index([foodsubcategory_id], map: "foodsubcategory_idx")
+}
+
+model fooditemsimages {
+  idfoodItemsImages   Int        @id @default(autoincrement())
+  food_items_image_ID String?    @db.VarChar(36)
+  foodItems_ID        String?    @db.VarChar(36)
+  images_ID           String?    @db.VarChar(36)
+  fooditems           fooditems? @relation(fields: [foodItems_ID], references: [food_itemID], onDelete: Restrict, map: "foodItemsImagesToFoodItems")
+  images              images?    @relation(fields: [images_ID], references: [image_urlID], onDelete: Restrict, map: "foodItemsToImages")
+
+  @@index([foodItems_ID], map: "foodItemsImagesToFoodItems_idx")
+  @@index([images_ID], map: "foodItemsToImages_idx")
+}
+
+model foodsubcategory {
+  idFoodSubcategory  Int          @id @default(autoincrement())
+  subcategory_name   String       @unique(map: "subcategory_name_UNIQUE") @db.VarChar(45)
+  description        String?      @db.MediumText
+  image_url          String?      @db.Text
+  /// Treated as unique by Prisma because fooditems uses this UUID as a relation target.
+  foodsubcategory_id String       @unique(map: "foodsubcategory_id_prisma_unique") @db.VarChar(36)
+  food_category_id   String       @db.VarChar(36)
+  created_on         DateTime?    @default(now()) @db.DateTime(0)
+  updated_on         DateTime?    @default(now()) @db.DateTime(0)
+  fooditems          fooditems[]
+  foodcategory       foodcategory @relation(fields: [food_category_id], references: [food_categoryID], onDelete: NoAction, onUpdate: NoAction, map: "fksubcat_category")
+
+  @@index([food_category_id], map: "food_category_id_idx")
+  @@index([foodsubcategory_id], map: "food_subcategory_idx")
+}
+
+model images {
+  idimages        Int               @id @default(autoincrement())
+  image_url       String?           @db.VarChar(45)
+  image_urlID     String            @unique(map: "image_urlID_UNIQUE") @db.VarChar(36)
+  created_at      DateTime?         @default(now()) @db.Timestamp(0)
+  updated_at      DateTime?         @default(now()) @db.Timestamp(0)
+  entity_type     String            @db.VarChar(45)
+  entity_id       String?           @db.VarChar(36)
+  fooditemsimages fooditemsimages[]
+  foodcategory    foodcategory?     @relation(fields: [entity_id], references: [category_name], onDelete: NoAction, onUpdate: NoAction, map: "fk_images_foodsubcat")
+  recipes_images  recipes_images[]
+
+  @@index([entity_id], map: "entity_id_idx")
+  @@index([entity_type], map: "entity_type_idx")
+}
+
+model meal_type_countries {
+  id           Int    @id @default(autoincrement())
+  meal_type_id String @db.Char(36)
+  country_id   Int
+}
+
+model mealmealtype {
+  ID              Int       @id @default(autoincrement())
+  meal_mealTypeID String    @unique(map: "mealtypeName_UNIQUE") @db.VarChar(100)
+  mealsID         String?   @db.VarChar(36)
+  mealTypeID      String    @db.VarChar(36)
+  created_at      DateTime? @default(now()) @db.Timestamp(0)
+  updated_at      DateTime? @default(now()) @db.Timestamp(0)
+  mealtype        mealtype  @relation(fields: [mealTypeID], references: [mealTypesID], onDelete: NoAction, map: "mealToMealTypeId")
+  meals           meals?    @relation(fields: [mealsID], references: [mealID], map: "mealtomealsID")
+
+  @@index([mealTypeID], map: "mealtomealTypeID_idx")
+  @@index([mealsID], map: "mealtomealsID_idx")
+}
+
+model mealplan {
+  portions Json?
+  breakfast_id String? @db.VarChar(36)
+  morning_break_id String? @db.VarChar(36)
+  lunch_id String? @db.VarChar(36)
+  evening_break_id String? @db.VarChar(36)
+  supper_id String? @db.VarChar(36)
+  breakfast_dish mealtype? @relation("plan_breakfast", fields: [breakfast_id], references: [mealTypesID], onDelete: Restrict, map: "plan_breakfast_dish")
+  morning_dish mealtype? @relation("plan_morning", fields: [morning_break_id], references: [mealTypesID], onDelete: Restrict, map: "plan_morning_break_dish")
+  lunch_dish mealtype? @relation("plan_lunch", fields: [lunch_id], references: [mealTypesID], onDelete: Restrict, map: "plan_lunch_dish")
+  evening_dish mealtype? @relation("plan_evening", fields: [evening_break_id], references: [mealTypesID], onDelete: Restrict, map: "plan_evening_break_dish")
+  supper_dish mealtype? @relation("plan_supper", fields: [supper_id], references: [mealTypesID], onDelete: Restrict, map: "plan_supper_dish")
+  idMealPlan    Int           @default(autoincrement())
+  day_of_week   String        @db.VarChar(255)
+  breakfast     String?       @db.VarChar(255)
+  morning_break String?       @db.VarChar(255)
+  Lunch         String?       @db.VarChar(255)
+  evening_break String?       @db.VarChar(255)
+  supper        String?       @db.VarChar(255)
+  mealplan_key  String?       @db.VarChar(45)
+  created_at    DateTime?     @default(now()) @db.Timestamp(0)
+  updated_at    DateTime?     @default(now()) @db.Timestamp(0)
+  mealplantime  mealplantime? @relation(fields: [mealplan_key], references: [meal_plan_name], onDelete: Cascade, map: "mealplankey")
+
+  @@id([idMealPlan, day_of_week])
+  @@index([mealplan_key], map: "mealplankey_idx")
+}
+
+model mealplantime {
+  idmealPlanWeek Int        @id @default(autoincrement())
+  meal_plan_name String     @unique(map: "meal_plan_name_UNIQUE") @db.VarChar(45)
+  created_on     DateTime?  @default(now()) @db.DateTime(0)
+  updated_at     DateTime?  @default(now()) @db.Timestamp(0)
+  owner_user_id  Int?
+  plan_goal      String     @default("balanced") @db.VarChar(45)
+  description    String?    @db.Text
+  budget_level   String     @default("standard") @db.VarChar(20)
+  estimated_cost Decimal?   @db.Decimal(10, 2)
+  currency       String     @default("KES") @db.VarChar(3)
+  image_url      String?    @db.Text
+  mealplan       mealplan[]
+  users          users?     @relation(fields: [owner_user_id], references: [idusers], map: "mealplantime_owner_user_id_foreign_idx")
+
+  @@index([owner_user_id])
+}
+
+model meals {
+  Id                       Int                        @id @default(autoincrement())
+  mealName                 String                     @unique(map: "meal_name_UNIQUE") @db.VarChar(255)
+  mealID                   String                     @unique(map: "mealTypeID_UNIQUE") @db.VarChar(36)
+  local_name               String?                    @db.VarChar(255)
+  description              String?                    @db.Text
+  image_url                String?                    @db.Text
+  video_url                String?                    @db.Text
+  pronunciation_url        String?                    @db.Text
+  country_id               Int?
+  created_at               DateTime?                  @default(now()) @db.Timestamp(0)
+  updated_at               DateTime?                  @default(now()) @updatedAt @db.Timestamp(0)
+  mealmealtype             mealmealtype[]
+  meal_food_items          meal_food_items[]
+  meal_preparation_sources meal_preparation_sources[]
+  meal_images              meal_images[]
+  countries                countries?                 @relation(fields: [country_id], references: [id], onDelete: SetNull, map: "meals_to_countries")
+
+  @@index([country_id], map: "idx_meals_country_id")
+}
+
+model meal_food_items {
+  id                Int       @id @default(autoincrement())
+  meal_id           String    @db.VarChar(36)
+  food_item_id      String    @db.Char(36)
+  quantity          String?   @db.VarChar(100)
+  unit              String?   @db.VarChar(50)
+  preparation_notes String?   @db.Text
+  created_at        DateTime? @default(now()) @db.Timestamp(0)
+  meals             meals     @relation(fields: [meal_id], references: [mealID], onDelete: Cascade, map: "meal_food_items_to_meals")
+  fooditems         fooditems @relation(fields: [food_item_id], references: [food_itemID], onDelete: Restrict, map: "meal_food_items_to_fooditems_restrict")
+
+  @@unique([meal_id, food_item_id], name: "unique_meal_food")
+  @@index([meal_id], map: "idx_meal_id")
+  @@index([food_item_id], map: "idx_food_item_id")
+}
+
+model meal_preparation_sources {
+  id          Int       @id @default(autoincrement())
+  meal_id     String    @db.VarChar(36)
+  source_type String    @db.VarChar(50)
+  source_url  String    @db.Text
+  title       String?   @db.VarChar(255)
+  created_at  DateTime? @default(now()) @db.Timestamp(0)
+  meals       meals     @relation(fields: [meal_id], references: [mealID], onDelete: Cascade, map: "meal_prep_sources_to_meals")
+
+  @@index([meal_id], map: "idx_meal_prep_sources")
+}
+
+model meal_images {
+  id          Int       @id @default(autoincrement())
+  meal_id     String    @db.VarChar(36)
+  image_url   String    @db.Text
+  image_order Int?      @default(0)
+  created_at  DateTime? @default(now()) @db.Timestamp(0)
+  meals       meals     @relation(fields: [meal_id], references: [mealID], onDelete: Cascade, map: "meal_images_to_meals")
+
+  @@index([meal_id], map: "idx_meal_images")
+}
+
+model mealtype {
+  owner_user_id Int?
+  servings Int @default(1)
+  breakfast_plans mealplan[] @relation("plan_breakfast")
+  morning_plans mealplan[] @relation("plan_morning")
+  lunch_plans mealplan[] @relation("plan_lunch")
+  evening_plans mealplan[] @relation("plan_evening")
+  supper_plans mealplan[] @relation("plan_supper")
+  meal_kind String @default("dish") @db.VarChar(20)
+  serving_instructions String? @db.Text
+  combination_items meal_combination_items[] @relation("combination")
+  used_in_combinations meal_combination_items[] @relation("dish")
+  idtable1                      Int                             @id @default(autoincrement())
+  meal_name                     String                          @unique(map: "meal_name_UNIQUE") @db.VarChar(255)
+  mealTypesID                   String                          @unique(map: "mealTypesID_UNIQUE") @db.VarChar(36)
+  local_name                    String?                         @db.VarChar(255)
+  description                   String?                         @db.Text
+  image_url                     String?                         @db.Text
+  video_url                     String?                         @db.Text
+  pronunciation_url             String?                         @db.Text
+  country_id                    Int?
+  created_at                    DateTime?                       @default(now()) @db.Timestamp(0)
+  updated_at                    DateTime?                       @default(now()) @updatedAt @db.Timestamp(0)
+  mealmealtype                  mealmealtype[]
+  recipe                        recipe[]
+  meal_type_food_items          meal_type_food_items[]
+  meal_type_preparation_sources meal_type_preparation_sources[]
+  meal_type_images              meal_type_images[]
+  countries                     countries?                      @relation(fields: [country_id], references: [id], onDelete: SetNull, map: "mealtype_to_countries")
+
+  @@index([country_id], map: "idx_mealtype_country_id")
+}
+
+model meal_type_food_items {
+  grams Decimal? @db.Decimal(10, 2)
+  id                Int       @id @default(autoincrement())
+  meal_type_id      String    @db.VarChar(36)
+  food_item_id      String    @db.VarChar(36)
+  quantity          String?   @db.VarChar(100)
+  unit              String?   @db.VarChar(50)
+  preparation_notes String?   @db.Text
+  created_at        DateTime? @default(now()) @db.Timestamp(0)
+  mealtype          mealtype  @relation(fields: [meal_type_id], references: [mealTypesID], onDelete: Cascade, map: "meal_type_food_items_to_mealtype")
+  fooditems         fooditems @relation(fields: [food_item_id], references: [food_itemID], onDelete: Restrict, map: "meal_type_food_items_to_fooditems_restrict")
+
+  @@unique([meal_type_id, food_item_id], name: "unique_meal_type_food")
+  @@index([food_item_id], map: "idx_meal_type_food_item")
+}
+
+model meal_type_preparation_sources {
+  id           Int       @id @default(autoincrement())
+  meal_type_id String    @db.VarChar(36)
+  source_type  String    @db.VarChar(50)
+  source_url   String    @db.Text
+  title        String?   @db.VarChar(255)
+  created_at   DateTime? @default(now()) @db.Timestamp(0)
+  mealtype     mealtype  @relation(fields: [meal_type_id], references: [mealTypesID], onDelete: Cascade, map: "meal_type_sources_to_mealtype")
+
+  @@index([meal_type_id], map: "idx_meal_type_sources")
+}
+
+model meal_type_images {
+  id           Int       @id @default(autoincrement())
+  meal_type_id String    @db.VarChar(36)
+  image_url    String    @db.Text
+  image_order  Int?      @default(0)
+  created_at   DateTime? @default(now()) @db.Timestamp(0)
+  mealtype     mealtype  @relation(fields: [meal_type_id], references: [mealTypesID], onDelete: Cascade, map: "meal_type_images_to_mealtype")
+
+  @@index([meal_type_id], map: "idx_meal_type_images")
+}
+
+model recipe {
+  idrecipe       Int              @id @default(autoincrement())
+  title          String           @db.VarChar(255)
+  description    String?          @db.Text
+  ingredients    String?          @db.Text
+  instructions   String?          @db.Text
+  prep_time      Int?
+  cook_time      Int?
+  total_time     Int?
+  servings       Int?
+  cuisine        String?          @db.VarChar(100)
+  difficulty     String?          @db.VarChar(50)
+  meal_type      String?          @db.VarChar(50)
+  recipe_ID      String           @unique(map: "recipe_ID_UNIQUE") @db.VarChar(36)
+  created_at     DateTime?        @default(now()) @db.Timestamp(0)
+  updated_at     DateTime?        @default(now()) @db.Timestamp(0)
+  meal_typeID    String?          @unique(map: "recipe_meal_type_unique") @db.VarChar(36)
+  owner_user_id  Int?
+  video_url      String?          @db.Text
+  base_recipe_id String?          @db.Char(36)
+  image_url      String?          @db.Text
+  mealtype       mealtype?        @relation(fields: [meal_typeID], references: [mealTypesID], onDelete: Restrict, map: "recipesToMealTypeId")
+  recipes_images recipes_images[]
+
+  @@index([meal_typeID], map: "recipesToMealTypeId_idx")
+}
+
+model recipe_food_items {
+  grams Decimal? @db.Decimal(10, 2)
+  id           Int     @id @default(autoincrement())
+  recipe_id    String  @db.Char(36)
+  food_item_id String  @db.Char(36)
+  quantity     String? @db.VarChar(100)
+  notes        String? @db.VarChar(255)
+}
+
+model recipes_images {
+  idrecipes_images  Int     @id @default(autoincrement())
+  recipes_images_ID String? @db.VarChar(36)
+  recipes_ID        String? @db.VarChar(36)
+  image_ID          String? @db.VarChar(36)
+  recipe            recipe? @relation(fields: [recipes_ID], references: [recipe_ID], onDelete: Restrict, map: "recipeImagesToRecipe")
+  images            images? @relation(fields: [image_ID], references: [image_urlID], onDelete: Restrict, map: "recipeToimages")
+
+  @@index([recipes_ID], map: "recipeImagesToRecipe_idx")
+  @@index([image_ID], map: "recipeToimages_idx")
+}
+
+model roles {
+  idroles    Int       @id @default(autoincrement())
+  role_type  String    @unique(map: "role_type_UNIQUE") @db.VarChar(45)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  updated_at DateTime? @default(now()) @db.Timestamp(0)
+  users      users[]
+}
+
+model sessions {
+  session_id String  @id @db.VarChar(128)
+  expires    Int     @db.UnsignedInt
+  data       String? @db.MediumText
+}
+
+model users {
+  idusers                Int            @id @default(autoincrement())
+  email                  String         @unique(map: "email_UNIQUE") @db.VarChar(45)
+  password               String         @db.Text
+  role                   String?        @db.VarChar(45)
+  userscol               String?        @db.VarChar(45)
+  reset_token            String?        @db.Text
+  reset_token_expiration String?        @db.Text
+  refresh_token          String?        @db.Text
+  created_at             DateTime?      @default(now()) @db.Timestamp(0)
+  updated_at             DateTime?      @default(now()) @db.Timestamp(0)
+  mealplantime           mealplantime[]
+  roles                  roles?         @relation(fields: [role], references: [role_type], onDelete: NoAction, onUpdate: NoAction, map: "role")
+
+  @@index([role], map: "role_idx")
+}
+
+model food_item_local_names {
+  pronunciation_url String? @db.Text
+  pronunciation_public_id String? @db.VarChar(255)
+  id           Int       @id @default(autoincrement())
+  food_item_id String    @db.VarChar(36)
+  country_id   Int
+  name         String    @db.VarChar(255)
+  scope        String    @db.VarChar(20)
+  tribe_name   String    @default("") @db.VarChar(100)
+  language_name String   @default("") @db.VarChar(100)
+  fooditem     fooditems @relation(fields: [food_item_id], references: [food_itemID], onDelete: Cascade)
+  country      countries @relation(fields: [country_id], references: [id], onDelete: Restrict)
+
+  @@unique([food_item_id, country_id, scope, tribe_name, language_name, name], map: "unique_food_local_name")
+  @@index([country_id])
+}
+
+model meal_combination_items {
+  portion_multiplier Decimal @default(1) @db.Decimal(10, 2)
+  id Int @id @default(autoincrement())
+  combination_id String @db.VarChar(36)
+  dish_id String @db.VarChar(36)
+  portions String? @db.VarChar(100)
+  notes String? @db.Text
+  display_order Int @default(0)
+  combination mealtype @relation("combination", fields: [combination_id], references: [mealTypesID], onDelete: Cascade)
+  dish mealtype @relation("dish", fields: [dish_id], references: [mealTypesID], onDelete: Restrict)
+  @@unique([combination_id, dish_id])
+  @@index([dish_id])
+}
+
+model legacy_meal_alias {
+  legacy_id String @id @db.VarChar(36)
+  dish_id String @db.VarChar(36)
+}

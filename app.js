@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 
 const MealPlanServer = require('./setup_server');
@@ -5,9 +7,9 @@ const { checkDatabaseConnection, closeDatabaseConnection } = require('./setup_da
 const config = require('./config');
 
 class Application {
-  initializeApp() {
+  async initializeApp() {
     this.#loadConfiguration();
-    checkDatabaseConnection();
+    await checkDatabaseConnection();
     const app = express();
     const server = new MealPlanServer(app);
     server.start();
@@ -16,6 +18,7 @@ class Application {
 
   #loadConfiguration() {
     config.validateConfig();
+    config.cloudinaryConfig();
   }
 
   // catch exceptions
@@ -33,7 +36,7 @@ class Application {
 
     process.on('SIGTERM', (error) => {
       console.log('error ', error);
-      Application.#shutDownProperly(2);
+      Application.shutDownProperly(2);
     });
 
     process.on('exit', (error) => {
@@ -55,7 +58,7 @@ class Application {
       .then(() => {
         process.exit(exitCode);
       })
-      .catcj((error) => {
+      .catch((error) => {
         console.log('error shutting down ', error);
         process.exit(1);
       });
@@ -63,4 +66,7 @@ class Application {
 }
 
 const application = new Application();
-application.initializeApp();
+application.initializeApp().catch((error) => {
+  console.error('Application startup failed:', error.message);
+  process.exit(1);
+});

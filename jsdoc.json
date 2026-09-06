@@ -1,0 +1,10 @@
+{
+    "source": {
+        "include": ["config"],
+        "exclude": ["node_modules","test"]
+    },
+    "opts": {
+        "destination": "./docs"
+    },
+    "plugins": ["plugins/markdown"]
+}

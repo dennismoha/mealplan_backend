@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const mealTypeFoodsController = require('../../controllers/mealTypeFoodsController');
+router.use((req, res, next) => ['GET', 'HEAD'].includes(req.method) ? next() : res.status(410).json({ message: 'This legacy relationship API is read-only. Use the canonical dish editor or meal combinations.' }));
+const mealTypeFoodsController = require('../../controller/meal_type_foods/meal_type_foods');
 const {
   createMealTypeFoodValidator,
   updateMealTypeFoodValidator,

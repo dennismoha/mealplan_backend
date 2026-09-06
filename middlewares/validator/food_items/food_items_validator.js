@@ -1,10 +1,16 @@
 const { param } = require('express-validator/check');
 // Validator for creating a new food item
 exports.createFoodItemValidator = (req, res, next) => {
-  req.check('food_name', 'Food name is required').notEmpty();
+  req.check('english_name', 'English name cannot be empty').optional().notEmpty();
+  req.check('food_name', 'Food name cannot be empty').optional().notEmpty();
   req.check('category_id', 'Category ID is required').notEmpty();
+  req.check('foodsubcategory_id', 'Subcategory ID is required').notEmpty();
   // Add more validation rules as needed
   const errors = req.validationErrors();
+
+  if (!req.body.english_name?.trim() && !req.body.food_name?.trim()) {
+    return res.status(400).json({ error: 'English name is required' });
+  }
 
   if (errors) {
     console.error('updateFoodVariationValidator errors', errors);
@@ -17,6 +23,7 @@ exports.createFoodItemValidator = (req, res, next) => {
 
 // Validator for updating a food item
 exports.updateFoodItemValidator = (req, res, next) => {
+  req.check('english_name', 'English name is required').optional().notEmpty();
   req.check('food_name', 'Food name is required').optional().notEmpty();
   req.check('category_id', 'Category ID is required').optional().notEmpty();
   // Add more validation rules as needed

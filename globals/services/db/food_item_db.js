@@ -1,57 +1,38 @@
-/* eslint-disable camelcase */
-const Query = require('./db_query_utilities');
-const query = new Query();
+const { v4: uuidv4 } = require('uuid');
+const prisma = require('../../../models/prisma');
+
+const legacyFoodItemSelect = {
+  idFoodItems: true,
+  food_name: true,
+  local_name: true,
+  local_names: { include: { country: true }, orderBy: { id: "asc" } },
+  descriptionl: true,
+  image_url: true,
+  video_url: true,
+  pronunciation_url: true,
+  pronunciation_public_id: true,
+  nutrient_description: true,
+  food_itemID: true,
+  category_id: true,
+  fooditem_cacheID: true,
+  created_at: true,
+  updated_at: true,
+  foodsubcategory_id: true,
+};
+
+const withEnglishName = food => ({ ...food, english_name: food.food_name });
 
 class FoodItemDB {
-  // add new food item to db
-  async addFoodItemToDB(data) {
-    const { food_name, descriptionl, image_url, category_id, fooditem_cacheID } = data;
-    console.log('data in services is ', data);
-
-    const insertQuery =
-      'INSERT INTO fooditems (food_name, descriptionl, image_url, category_id, fooditem_cacheID) VALUES (?, ?, ?, ?,?)';
-    const insertParams = [food_name, descriptionl, image_url, category_id, fooditem_cacheID];
-
-    await query.insertNewRecord(insertQuery, insertParams);
-
-    return;
-  }
-
-  //select all food items from db
+  async addFoodItemToDB(data) { return prisma.fooditems.create({ data: { ...data, food_itemID: data.food_itemID || uuidv4() }, include: { local_names: { include: { country: true } } } }); }
   async fetchFoodItemsFromDb() {
-    const sql = 'SELECT * FROM fooditems';
-    let result = await query.getAll(sql);
-    return result;
+    const foods = await prisma.fooditems.findMany({ select: legacyFoodItemSelect, orderBy: { food_name: 'asc' } });
+    return foods.map(withEnglishName);
   }
-
-  //select single food item from db
   async fetchSingleFoodItemsFromDb(id) {
-    const sql = 'SELECT * FROM fooditems WHERE fooditem_cacheID = ?';
-    const params = [id];
-    let result = await query.checkIfRecordExists(sql, params);
-    return result;
+    const foods = await prisma.fooditems.findMany({ select: legacyFoodItemSelect, where: { fooditem_cacheID: id } });
+    return foods.map(withEnglishName);
   }
-
-  //update foodItem in the db
-  async updateFoodItemInDb(data) {
-    const { food_name, descriptionl, image_url, category_id, fooditem_cacheID } = data;
-    const updated_at = new Date();
-    const params = [food_name, descriptionl, image_url, category_id, updated_at, fooditem_cacheID];
-    const sql =
-      // eslint-disable-next-line max-len
-      'UPDATE fooditems SET food_name = ?, descriptionl = ?, image_url = ?,  category_id = ?, updated_at = ? WHERE fooditem_cacheID = ?';
-    const result = await query.updateRecord(sql, params);
-    console.log('update results are ', result);
-    return result;
-  }
-
-  //delete foodItem in the db
-  async deleteFoodItemInDb(key) {
-    const sql = 'DELETE FROM fooditems WHERE fooditem_cacheID = ?';
-    await query.deleteRecord(sql, [key]);
-    return;
-  }
+  async updateFoodItemInDb(data) { return prisma.fooditems.updateMany({ data, where: { fooditem_cacheID: data.fooditem_cacheID } }); }
+  async deleteFoodItemInDb(key) { return prisma.fooditems.deleteMany({ where: { fooditem_cacheID: key } }); }
 }
-
-const foodItemDB = new FoodItemDB();
-module.exports = foodItemDB;
+module.exports = new FoodItemDB();

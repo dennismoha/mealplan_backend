@@ -1,6 +1,5 @@
 /* eslint-disable camelcase */
 const { BaseCache } = require('./base.cache');
-const DatabaseError = require('../../../middlewares/custom_errors/database_error');
 const { generateRandomScore } = require('../../helpers/helpers');
 const { FOOD_ITEM_SET, FOOD_ITEM_HASH } = require('../../../constants');
 
@@ -14,13 +13,14 @@ class FoodItemRedis extends BaseCache {
       if (!this.client.isOpen) {
         await this.client.connect();
       }
-      const { food_name, descriptionl, image_url, category_id } = data;
+      const { food_name, descriptionl, image_url, category_id, foodsubcategory_id } = data;
       const dataToSave = {
         food_name: `${food_name}`,
         descriptionl: `${descriptionl}`,
         image_url: `${image_url}`,
         category_id: `${category_id}`,
-        fooditem_cachedID: `${key}`
+        foodsubcategory_id: `${foodsubcategory_id}`,
+        fooditem_cacheID: `${key}`
       };
 
       const multi = this.client.multi();
@@ -34,10 +34,10 @@ class FoodItemRedis extends BaseCache {
         multi.HSET(`${FOOD_ITEM_HASH}:${key}`, `${itemKey}`, `${itemValue}`);
       }
 
-      multi.exec();
+      await multi.exec();
     } catch (error) {
       console.log('error connecting to redis', error);
-      new DatabaseError('something went wrong');
+      return false;
     }
   }
 
@@ -60,6 +60,7 @@ class FoodItemRedis extends BaseCache {
       return foodItems;
     } catch (error) {
       console.log('error connecting to redis');
+      return [];
     }
   }
 
@@ -72,9 +73,10 @@ class FoodItemRedis extends BaseCache {
 
       const foodItems = await this.client.HGETALL(`${FOOD_ITEM_HASH}:${key}`);
       console.log('food items is ', foodItems);
-      return [];
+      return Object.keys(foodItems).length ? foodItems : [];
     } catch (error) {
       console.log('error connecting to redis');
+      return [];
     }
   }
 

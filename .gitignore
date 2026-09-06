@@ -3,3 +3,13 @@ node_modules
 .env
 dump.rdb
 notes
+ssh/
+frontend/dist/
+frontend/*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
+readme.md
+MEAL_CREATION_API.md
+MEAL_FEATURE_SUMMARY.md
+SEEDING_COMPLETE.md
+SEEDING_GUIDE.md

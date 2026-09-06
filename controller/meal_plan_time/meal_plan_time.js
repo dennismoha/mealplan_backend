@@ -1,88 +1,69 @@
-// mealplantimeController.js
-const IndexQuery = require('../query_utiltity/index');
+const prisma = require('../../models/prisma');
+const BadRequestError = require('../../middlewares/custom_errors/bad_request');
+const ConflictError = require('../../middlewares/custom_errors/conflict_error');
+const { getSuccessMessage } = require('../../middlewares/custom_success/sucess_message');
 
-const indexQuery = new IndexQuery();
+const GOALS = new Set(['weight_loss', 'weight_gain', 'balanced', 'performance', 'medical']);
+const BUDGET_LEVELS = new Set(['budget', 'standard', 'premium']);
 
-exports.getAllMealplanTimes = async (req, res) => {
-  const sql = 'SELECT * FROM mealplantime';
-  try {
-    const mealplanTimes = await indexQuery.getAll(sql);
-    res.json(mealplanTimes);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+function mealPlanTimeData(body, partial = false) {
+  const data = {};
+  const name = body.mealPlanName?.trim();
+  if (!partial || body.mealPlanName !== undefined) {
+    if (!name || name.length < 3) throw new BadRequestError('Meal plan name must contain at least 3 characters');
+    data.meal_plan_name = name;
   }
-};
+  if (!partial || body.planGoal !== undefined) {
+    const goal = body.planGoal || 'balanced';
+    if (!GOALS.has(goal)) throw new BadRequestError('Invalid meal plan goal');
+    data.plan_goal = goal;
+  }
+  if (!partial || body.budgetLevel !== undefined) {
+    const budget = body.budgetLevel || 'standard';
+    if (!BUDGET_LEVELS.has(budget)) throw new BadRequestError('Invalid budget level');
+    data.budget_level = budget;
+  }
+  if (!partial || body.description !== undefined) data.description = body.description?.trim() || null;
+  if (!partial || body.estimatedCost !== undefined) {
+    const cost = body.estimatedCost === '' || body.estimatedCost == null ? null : Number(body.estimatedCost);
+    if (cost !== null && (!Number.isFinite(cost) || cost < 0)) throw new BadRequestError('Estimated cost must be a non-negative number');
+    data.estimated_cost = cost;
+  }
+  if (!partial || body.currency !== undefined) {
+    const currency = (body.currency || 'KES').trim().toUpperCase();
+    if (!/^[A-Z]{3}$/.test(currency)) throw new BadRequestError('Currency must be a three-letter code');
+    data.currency = currency;
+  }
+  if (!partial || body.imageUrl !== undefined) data.image_url = body.imageUrl?.trim() || null;
+  return data;
+}
+
+exports.getAllMealplanTimes = async (req, res) => res.status(200).send(
+  getSuccessMessage(200, await prisma.mealplantime.findMany({ orderBy: { idmealPlanWeek: 'asc' } }), 'Successfully retrieved')
+);
 
 exports.getMealplanTime = async (req, res) => {
-  let id = req.params.id;
-  const sql = 'SELECT * FROM mealplantime WHERE mealplantime_ID = ?';
-
-  try {
-    const mealplanTime = await indexQuery.checkIfRecordExists(sql, [id]);
-
-    if (mealplanTime.length === 0) {
-      return res.status(404).json({ message: 'meal plan time resource not exisrs' });
-    }
-    return res.json(mealplanTime);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  const row = await prisma.mealplantime.findUnique({ where: { idmealPlanWeek: Number(req.params.id) } });
+  return row ? res.json(row) : res.status(404).json({ message: 'Meal plan time resource does not exist' });
 };
 
 exports.createMealplanTime = async (req, res) => {
-  const { mealPlanName } = req.body;
-
-  // Check if the meal plan already exists
-  const checkIfMealplanExistsSql = 'SELECT * FROM mealplantime WHERE meal_plan_name = ?';
-  const existingMealplan = await indexQuery.checkIfRecordExists(checkIfMealplanExistsSql, [mealPlanName]);
-
-  console.log('existing meal plan is ', existingMealplan);
-  if (existingMealplan.length !== 0) {
-    return res.status(400).json({ message: 'Meal plan with the same name already exists' });
-  }
-
-  const insertMealplanSql = 'INSERT INTO mealplantime (meal_plan_name) VALUES (?)';
-
-  try {
-    await indexQuery.insertNewRecord(insertMealplanSql, [mealPlanName]);
-    res.status(201).json({ message: 'successfully created' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  const data = mealPlanTimeData(req.body);
+  if (await prisma.mealplantime.findUnique({ where: { meal_plan_name: data.meal_plan_name } })) throw new ConflictError('Meal plan with the same name already exists');
+  const created = await prisma.mealplantime.create({ data: { ...data, owner_user_id: req.userId } });
+  return res.status(201).send(getSuccessMessage(201, created, 'Successfully created a meal plan'));
 };
 
 exports.updateMealplanTime = async (req, res) => {
-  // eslint-disable-next-line camelcase
-  const { mealPlanName, mealplantime_ID } = req.body;
-  // eslint-disable-next-line camelcase
-  let id = mealplantime_ID;
-
-  // Check if the meal plan already exists
-  // const checkIfMealplanExistsSql = 'SELECT * FROM mealplantime WHERE meal_plan_name = ?';
-  // const existingMealplan = await indexQuery.checkIfRecordExists(checkIfMealplanExistsSql, [mealPlanName]);
-
-  // if (existingMealplan.length !== 0) {
-  //   return res.status(400).json({ message: 'Meal plan with the same name already exists' });
-  // }
-
-  const updateMealplanSql = 'UPDATE mealplantime SET meal_plan_name = ? WHERE  mealplantime_ID = ?';
-
-  try {
-    await indexQuery.updateRecord(updateMealplanSql, [mealPlanName, id]);
-    res.json({ message: 'meal plan updated successfully' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) throw new BadRequestError('Invalid meal plan id');
+  const data = mealPlanTimeData(req.body, true);
+  if (data.meal_plan_name && await prisma.mealplantime.findFirst({ where: { meal_plan_name: data.meal_plan_name, idmealPlanWeek: { not: id } } })) throw new ConflictError('Meal plan with the same name already exists');
+  const updated = await prisma.mealplantime.update({ data, where: { idmealPlanWeek: id } });
+  return res.status(200).send(getSuccessMessage(200, updated, 'Successfully updated'));
 };
 
 exports.deleteMealplanTime = async (req, res) => {
-  let id = req.params.id;
-  const sql = 'DELETE FROM mealplantime WHERE  mealplantime_ID  = ?';
-
-  try {
-    await indexQuery.deleteRecord(sql, [id]);
-    res.json({ message: 'Deleted meal plan time' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  await prisma.mealplantime.delete({ where: { idmealPlanWeek: Number(req.params.id) } });
+  return res.status(200).send(getSuccessMessage(200, null, 'Deleted successfully'));
 };

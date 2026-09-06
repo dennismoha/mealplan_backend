@@ -1,24 +1,15 @@
-const { pool } = require('./config/db');
+const prisma = require('./models/prisma');
 const { redisConnection } = require('./globals/services/redis/redis.connection');
+const { bootstrapIdentityData, seedReferenceCountries } = require('./models/bootstrap');
 
 // Function to check database connection
 async function checkDatabaseConnection() {
   try {
-    // now get a Promise wrapped instance of that pool
-    const promisePool = pool.promise();
-    const connection = await promisePool.getConnection();
-    console.log('Connected to MySQL database.');
-
-    await connection.ping((pingErr) => {
-      connection.release();
-      if (!pingErr) {
-        return;
-      }
-      process.exit(1);
-    });
+    await prisma.$queryRaw`SELECT 1`;
     console.log('MySQL database is reachable.');
-
-    connection.release(); // Release the MySQL connection after using it
+    // await seedReferenceCountries();
+    const admin = await bootstrapIdentityData();
+    if (admin.created) console.log('Initial administrator account created.');
 
     // Now check Redis connection
     await redisConnection.redisPingAsync();
@@ -28,15 +19,13 @@ async function checkDatabaseConnection() {
   } catch (error) {
     console.error('Error connecting to the database:', error);
     process.exit(1); // Exit the application if connection fails
-  }
+  } finally {
+      await prisma.$disconnect(); // Disconnect Prisma Client
+    }
 }
 
 async function closeDatabaseConnection() {
-  const promisePool = pool.promise();
-  promisePool.end((err) => {
-    console.log('database pool connection closed err ', err);
-    return;
-  });
+  await prisma.$disconnect();
   console.log('database pool connection closed success');
   return;
 }

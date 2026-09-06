@@ -1,5 +1,7 @@
 // mealplantimeValidation.js
 
+const BadRequestError = require("#mealplan/middlewares/custom_errors/bad_request.js");
+
 // Validation middleware for create and update operations
 exports.validateMealplanTime = (req, res, next) => {
   // Express Validator checks for missing data
@@ -7,10 +9,10 @@ exports.validateMealplanTime = (req, res, next) => {
 
   const errors = req.validationErrors();
 
-  if (errors) {
-    console.error('validateMealplanTime', errors);
+
+  if (errors) {   
     const firstError = errors.map((error) => error.msg)[0];
-    return res.status(400).json({ error: firstError });
+    throw new BadRequestError(firstError) 
   }
 
   next();

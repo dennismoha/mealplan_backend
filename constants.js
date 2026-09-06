@@ -14,6 +14,7 @@ exports.CATEGORY_HASH = 'categories';
 // CATEGORY BULL JOBS CONSTANTS
 exports.CATEGORY_UPDATE = 'updateCategory';
 exports.CATEGORY_DELETE = 'deleteCategory';
+exports.CATEGORY_ADD_TO_DB ='addCategoriesToDb'
 
 // MEALPLAN REDIS CONSTANTS
 
