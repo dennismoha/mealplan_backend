@@ -4,7 +4,7 @@ A dish or recipe's **yield** defines how many servings its ingredient batch make
 
 For example, if a dish contains six eggs and yields six servings, Monday breakfast can specify one serving in one plan and six in another. Ingredient weights, nutrition, shopping quantities and estimated costs scale accordingly. Set an accurate batch weight to calculate nutrients and cost; the text “six eggs” alone does not establish a gram weight.
 
-Edit a day in the planner to set servings and optional portion instructions for each slot. Instructions appear in the planner and CSV but do not affect calculations. For combinations, each component can have its own plan-specific servings: increase eggs while retaining the original toast portion. Component servings multiply the overall scheduled serving count. Neither the shared dish nor the shared combination is changed.
+Edit a day in the planner to write portion instructions for each meal. The meal name appears above the instructions in the planner; CSV exports also include the notes. Numeric serving and component inputs are no longer shown. Existing stored serving quantities are preserved; new selections default to one serving. Free-text instructions do not change nutrition, shopping or cost calculations. The API continues to support numeric portions for compatibility.
 
 ## Prices
 

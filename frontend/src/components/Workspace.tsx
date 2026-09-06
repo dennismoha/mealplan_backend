@@ -137,7 +137,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
       ["Day", ...SLOTS.map((slot) => slot.label)],
       ...DAYS.map((day) => [
         day,
-        ...SLOTS.map((slot) => { const value = planDays[day]?.[slot.key]; return value ? `${catalog.mealSlots.find(m => m.mealID === value)?.mealName || value} — ${portionText(planDays[day], slot.key)}` : ""; }),
+        ...SLOTS.map((slot) => { const value = planDays[day]?.[slot.key]; return value ? `${catalog.mealSlots.find(m => m.mealID === value)?.mealName || value}${portionText(planDays[day], slot.key) ? ` — ${portionText(planDays[day], slot.key)}` : ""}` : ""; }),
       ]),
     ];
     const csv = `\uFEFF${rows.map((row) => row.map(csvCell).join(",")).join("\r\n")}`;
@@ -152,10 +152,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
   };
 
   const portionText = (day: DayMeals | undefined, slot: MealSlot) => {
-    const portion = day?.portions?.[slot];
-    const count = portion?.servings ?? 1;
-    const components = Object.entries(portion?.components || {}).map(([id, servings]) => `${catalog.mealSlots.find(m => m.mealID === id)?.mealName || id}: ${servings * count} servings`);
-    return [`${count} serving${count === 1 ? '' : 's'}`, ...components, portion?.instructions].filter(Boolean).join(' · ');
+    return day?.portions?.[slot]?.instructions?.trim() || '';
   };
   const patchPortion = (slot: MealSlot, patch: Partial<PlanPortion>) => {
     if (!editor) return;
@@ -477,12 +474,12 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
                             : canManageSelectedPlan && openEditor(day)
                         }
                       >
-                        {mealName && <small className="plan-portion">{portionText(days[day], slot.key)}</small>}
                         {mealName || (
                           <span>
                             {canManageSelectedPlan ? "＋ Add meal" : "—"}
                           </span>
                         )}
+                        {mealName && portionText(days[day], slot.key) && <small className="plan-portion">{portionText(days[day], slot.key)}</small>}
                       </button>
                     );
                   }),
@@ -544,7 +541,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
               {editor.editing ? "Edit the menu" : "Set the menu"}
             </span>
             <h2>{editor.day}</h2>
-            <p className="modal-copy">Set portions for this plan and day. A serving is one share of the recipe yield; for a one-egg serving, choose 6 servings for six eggs. Instructions describe the portion; only numeric servings change totals.</p>
+            <p className="modal-copy">Write the quantities and any guidance in the portion instructions for each meal, for example “6 eggs and 2 slices of toast”. These notes do not automatically change nutrition or cost estimates.</p>
             <div className="fields meal-picker-fields">
               {SLOTS.map((slot) => (
                 <fieldset key={slot.key}><label>
@@ -582,9 +579,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
                     ))}
                   </select>
                 </label>
-                <label><span>Servings in this plan</span><input type="number" required min="0.01" max="1000" step="0.01" value={editor.values.portions?.[slot.key]?.servings ?? 1} onChange={e => patchPortion(slot.key, { servings: Number(e.target.value) })} /></label>
-                <label><span>Portion instructions</span><input maxLength={500} placeholder="e.g. 6 eggs, divided across the day" value={editor.values.portions?.[slot.key]?.instructions || ""} onChange={e => patchPortion(slot.key, { instructions: e.target.value })} /></label>
-                {catalog.mealSlots.find(m => m.mealID === editor.values[slot.key])?.combination_items?.map(component => <label key={component.dish_id}><span>{catalog.mealSlots.find(m => m.mealID === component.dish_id)?.mealName || 'Dish'} servings per combination serving</span><input type="number" required min="0.01" max="1000" step="0.01" value={editor.values.portions?.[slot.key]?.components?.[component.dish_id] ?? component.portion_multiplier ?? 1} onChange={e => patchPortion(slot.key, { components: { ...editor.values.portions?.[slot.key]?.components, [component.dish_id]: Number(e.target.value) } })} /></label>)}
+                <label><span>Portion instructions</span><textarea rows={3} maxLength={500} placeholder="e.g. 6 eggs, divided across the day" value={editor.values.portions?.[slot.key]?.instructions || ""} onChange={e => patchPortion(slot.key, { instructions: e.target.value })} /></label>
                 </fieldset>
               ))}
             </div>
