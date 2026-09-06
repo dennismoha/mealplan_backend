@@ -26,6 +26,11 @@ model food_item_countries {
 }
 
 model food_nutrition {
+  price_checked_at DateTime? @db.Date
+  price_source String? @db.VarChar(255)
+  price_location String? @db.VarChar(150)
+  price_per_100g Decimal? @db.Decimal(10, 2)
+  currency String @default("KES") @db.VarChar(3)
   id              Int       @id @default(autoincrement())
   food_item_id    String    @unique(map: "food_item_id") @db.Char(36)
   serving_size_g  Decimal?  @db.Decimal(8, 2)
@@ -145,6 +150,17 @@ model mealmealtype {
 }
 
 model mealplan {
+  portions Json?
+  breakfast_id String? @db.VarChar(36)
+  morning_break_id String? @db.VarChar(36)
+  lunch_id String? @db.VarChar(36)
+  evening_break_id String? @db.VarChar(36)
+  supper_id String? @db.VarChar(36)
+  breakfast_dish mealtype? @relation("plan_breakfast", fields: [breakfast_id], references: [mealTypesID], onDelete: Restrict, map: "plan_breakfast_dish")
+  morning_dish mealtype? @relation("plan_morning", fields: [morning_break_id], references: [mealTypesID], onDelete: Restrict, map: "plan_morning_break_dish")
+  lunch_dish mealtype? @relation("plan_lunch", fields: [lunch_id], references: [mealTypesID], onDelete: Restrict, map: "plan_lunch_dish")
+  evening_dish mealtype? @relation("plan_evening", fields: [evening_break_id], references: [mealTypesID], onDelete: Restrict, map: "plan_evening_break_dish")
+  supper_dish mealtype? @relation("plan_supper", fields: [supper_id], references: [mealTypesID], onDelete: Restrict, map: "plan_supper_dish")
   idMealPlan    Int           @default(autoincrement())
   day_of_week   String        @db.VarChar(255)
   breakfast     String?       @db.VarChar(255)
@@ -240,6 +256,13 @@ model meal_images {
 }
 
 model mealtype {
+  owner_user_id Int?
+  servings Int @default(1)
+  breakfast_plans mealplan[] @relation("plan_breakfast")
+  morning_plans mealplan[] @relation("plan_morning")
+  lunch_plans mealplan[] @relation("plan_lunch")
+  evening_plans mealplan[] @relation("plan_evening")
+  supper_plans mealplan[] @relation("plan_supper")
   meal_kind String @default("dish") @db.VarChar(20)
   serving_instructions String? @db.Text
   combination_items meal_combination_items[] @relation("combination")
@@ -266,6 +289,7 @@ model mealtype {
 }
 
 model meal_type_food_items {
+  grams Decimal? @db.Decimal(10, 2)
   id                Int       @id @default(autoincrement())
   meal_type_id      String    @db.VarChar(36)
   food_item_id      String    @db.VarChar(36)
@@ -331,6 +355,7 @@ model recipe {
 }
 
 model recipe_food_items {
+  grams Decimal? @db.Decimal(10, 2)
   id           Int     @id @default(autoincrement())
   recipe_id    String  @db.Char(36)
   food_item_id String  @db.Char(36)
@@ -399,6 +424,7 @@ model food_item_local_names {
 }
 
 model meal_combination_items {
+  portion_multiplier Decimal @default(1) @db.Decimal(10, 2)
   id Int @id @default(autoincrement())
   combination_id String @db.VarChar(36)
   dish_id String @db.VarChar(36)
@@ -409,4 +435,9 @@ model meal_combination_items {
   dish mealtype @relation("dish", fields: [dish_id], references: [mealTypesID], onDelete: Restrict)
   @@unique([combination_id, dish_id])
   @@index([dish_id])
+}
+
+model legacy_meal_alias {
+  legacy_id String @id @db.VarChar(36)
+  dish_id String @db.VarChar(36)
 }

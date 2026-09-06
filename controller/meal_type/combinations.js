@@ -9,14 +9,13 @@ exports.save = async (req, res) => {
       if (req.params.id) {
         const existing = await tx.mealtype.findUnique({ where: { mealTypesID: req.params.id } });
         if (!existing || existing.meal_kind !== 'combination') fail(404, 'Combination not found');
-        // Planner entries store meal names. Keep those references stable.
-        if (existing.meal_name !== data.meal_name) fail(400, 'Combination names cannot be changed after creation; edit its dishes and serving instructions instead.');
+        if (req.roles !== 'admin' && existing.owner_user_id !== req.userId) fail(403, 'Only the author or an administrator can edit this combination');
       }
       const found = await tx.mealtype.findMany({ where: { mealTypesID: { in: dishes.map(d => d.dish_id) }, meal_kind: 'dish' } });
       if (found.length !== dishes.length) fail(400, 'Only existing individual dishes can be included. Nested combinations are not allowed.');
       const nested = { create: dishes, ...(req.params.id ? { deleteMany: {} } : {}) };
       const payload = { ...data, meal_kind: 'combination', combination_items: nested };
-      return req.params.id ? tx.mealtype.update({ where: { mealTypesID: req.params.id }, data: payload, include: { combination_items: true } }) : tx.mealtype.create({ data: { ...payload, mealTypesID: uuidv4() }, include: { combination_items: true } });
+      return req.params.id ? tx.mealtype.update({ where: { mealTypesID: req.params.id }, data: payload, include: { combination_items: true } }) : tx.mealtype.create({ data: { ...payload, mealTypesID: uuidv4(), owner_user_id: req.userId }, include: { combination_items: true } });
     }, { isolationLevel: 'Serializable' });
     return res.status(req.params.id ? 200 : 201).json({ data: result });
   } catch (error) {

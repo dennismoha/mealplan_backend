@@ -1,6 +1,9 @@
+import FoodPrices from "./FoodPrices";
+import TaxonomyManager from "./TaxonomyManager";
+import TotalsPanel from "./TotalsPanel";
 import CombinationForm from "./CombinationForm";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { type DayMeals, type FoodItem } from "../api";
+import { type DayMeals, type FoodItem, type MealSlot, type PlanPortion } from "../api";
 import { demoPlans } from "../demo";
 import CatalogView from "./CatalogView";
 import { FoodDrawer, MealDrawer } from "./DetailDrawers";
@@ -41,7 +44,7 @@ const EMPTY: DayMeals = {
   evening_break: "",
   supper: "",
 };
-const SLOTS: { key: keyof DayMeals; label: string; icon: string }[] = [
+const SLOTS: { key: MealSlot; label: string; icon: string }[] = [
   { key: "breakfast", label: "Breakfast", icon: "☼" },
   { key: "morning_break", label: "Morning break", icon: "◌" },
   { key: "lunch", label: "Lunch", icon: "◇" },
@@ -73,7 +76,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
   const [budgetFilter, setBudgetFilter] = useState<"all" | "budget">("all");
   const user = useSelector((state: RootState) => state.auth.user);
 
-  const plansQuery = useGetPlansQuery(mode === "professional" ? "mine" : "all");
+  const plansQuery = useGetPlansQuery(user && user.role !== "admin" ? "mine" : "all");
   const catalogQuery = useGetCatalogQuery();
   const [saveDayMutation, saveState] = useSaveDayMutation();
   const [deleteDayMutation, deleteState] = useDeleteDayMutation();
@@ -97,8 +100,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
   const loading = plansQuery.isLoading;
   const saving = saveState.isLoading || deleteState.isLoading;
   const canCreatePlans =
-    mode !== "public" &&
-    (user?.role === "professional" || user?.role === "admin");
+    Boolean(user);
 
   useEffect(() => {
     if (!plans.length) return;
@@ -117,7 +119,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
   );
   const canManageSelectedPlan =
     user?.role === "admin" ||
-    (user?.role === "professional" && plan?.ownerUserId === user.id);
+    (Boolean(user) && plan?.ownerUserId === user?.id);
   const days =
     plan && typeof plan.data !== "string" ? plan.data.daysOfWeek : {};
   const filled = DAYS.filter((day) => days[day]).length;
@@ -126,7 +128,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
     if (!plan || typeof plan.data === "string") return;
     const planDays = plan.data.daysOfWeek;
     const csvCell = (value: unknown) =>
-      `"${String(value ?? "").replace(/"/g, '""')}"`;
+      `"${String(value ?? "").replace(/^[=+@\-\t\r]/, "'$&").replace(/"/g, '""')}"`;
     const rows = [
       ["Meal plan", plan.mealplankey],
       ["Goal", plan.planGoal?.replace(/_/g, " ") || ""],
@@ -135,7 +137,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
       ["Day", ...SLOTS.map((slot) => slot.label)],
       ...DAYS.map((day) => [
         day,
-        ...SLOTS.map((slot) => planDays[day]?.[slot.key] || ""),
+        ...SLOTS.map((slot) => { const value = planDays[day]?.[slot.key]; return value ? `${catalog.mealSlots.find(m => m.mealID === value)?.mealName || value} — ${portionText(planDays[day], slot.key)}` : ""; }),
       ]),
     ];
     const csv = `\uFEFF${rows.map((row) => row.map(csvCell).join(",")).join("\r\n")}`;
@@ -149,6 +151,16 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
     URL.revokeObjectURL(url);
   };
 
+  const portionText = (day: DayMeals | undefined, slot: MealSlot) => {
+    const portion = day?.portions?.[slot];
+    const count = portion?.servings ?? 1;
+    const components = Object.entries(portion?.components || {}).map(([id, servings]) => `${catalog.mealSlots.find(m => m.mealID === id)?.mealName || id}: ${servings * count} servings`);
+    return [`${count} serving${count === 1 ? '' : 's'}`, ...components, portion?.instructions].filter(Boolean).join(' · ');
+  };
+  const patchPortion = (slot: MealSlot, patch: Partial<PlanPortion>) => {
+    if (!editor) return;
+    setEditor({ ...editor, values: { ...editor.values, portions: { ...editor.values.portions, [slot]: { servings: 1, ...editor.values.portions?.[slot], ...patch } } } });
+  };
   const openEditor = (day: string) => {
     const current = days[day];
     setEditor({
@@ -295,7 +307,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
               >
                 ↧ Print plan
               </button>
-              {canCreatePlans && (
+              {(user?.role === "professional" || user?.role === "admin") && (
                 <button
                   className="secondary"
                   onClick={() => setShowMealForm(true)}
@@ -304,7 +316,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
                   ＋ Meal
                 </button>
               )}
-              {canCreatePlans && (
+              {(user?.role === "professional" || user?.role === "admin") && (
                 <button
                   className="secondary"
                   onClick={() => setShowRecipe(true)}
@@ -368,6 +380,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
         )}
 
         <section className="planner" id="planner">
+          {mode === "public" && canCreatePlans && <button className="primary" onClick={() => setShowNewPlan(true)}>＋ New personal plan</button>}
           <div className="section-heading">
             <div>
               <span className="eyebrow">Plan at a glance</span>
@@ -447,7 +460,9 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
                     </div>
                   </div>,
                   ...DAYS.map((day) => {
-                    const mealName = days[day]?.[slot.key];
+                    const mealValue = days[day]?.[slot.key];
+                    const meal = catalog.mealSlots.find(m => m.mealID === mealValue || m.mealName === mealValue);
+                    const mealName = meal?.mealName || mealValue;
                     return (
                       <button
                         className={`meal-cell ${!mealName ? "empty" : ""}`}
@@ -456,11 +471,13 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
                           mealName
                             ? setMealDetail({
                                 name: mealName,
+                                id: meal?.mealID,
                                 slot: slot.label,
                               })
                             : canManageSelectedPlan && openEditor(day)
                         }
                       >
+                        {mealName && <small className="plan-portion">{portionText(days[day], slot.key)}</small>}
                         {mealName || (
                           <span>
                             {canManageSelectedPlan ? "＋ Add meal" : "—"}
@@ -478,6 +495,9 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
           </p>
         </section>
 
+        {plan && !offline && <TotalsPanel kind="plan" id={String(plan.idmealPlanWeek)} estimate={plan.estimatedCost} currency={plan.currency} />}
+        <FoodPrices catalog={catalog} canManage={user?.role === "admin"} />
+        {user?.role === "admin" && <TaxonomyManager catalog={catalog} />}
         {<DiscoveryStrip showExtras={mode === "public"} onCreateCombination={user?.role === "admin" || user?.role === "professional" ? () => setShowCombination(true) : undefined} catalog={catalog} onMeal={(id, name) => setMealDetail({ name, slot: "meal", id })} />}
         {mode !== "professional" && (
           <div id="library">
@@ -524,10 +544,10 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
               {editor.editing ? "Edit the menu" : "Set the menu"}
             </span>
             <h2>{editor.day}</h2>
-            <p className="modal-copy">Make it nourishing, make it yours.</p>
+            <p className="modal-copy">Set portions for this plan and day. A serving is one share of the recipe yield; for a one-egg serving, choose 6 servings for six eggs. Instructions describe the portion; only numeric servings change totals.</p>
             <div className="fields meal-picker-fields">
               {SLOTS.map((slot) => (
-                <label key={slot.key}>
+                <fieldset key={slot.key}><label>
                   <span>
                     {slot.icon} {slot.label}
                   </span>
@@ -540,6 +560,7 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
                         values: {
                           ...editor.values,
                           [slot.key]: e.target.value,
+                          portions: { ...editor.values.portions, [slot.key]: { servings: 1, instructions: "", components: {} } },
                         },
                       })
                     }
@@ -547,20 +568,24 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
                     <option value="">Choose a meal…</option>
                     {editor.values[slot.key] &&
                       !catalog.mealSlots.some(
-                        (meal) => meal.mealName === editor.values[slot.key],
+                        (meal) => meal.mealID === editor.values[slot.key],
                       ) && (
                         <option value={editor.values[slot.key]}>
                           {editor.values[slot.key]} (legacy)
                         </option>
                       )}
                     {catalog.mealSlots.map((meal) => (
-                      <option key={meal.mealID} value={meal.mealName}>
+                      <option key={meal.mealID} value={meal.mealID}>
                         {meal.mealName}{meal.meal_kind === "combination" ? " (combination)" : ""}
                         {meal.local_name ? ` · ${meal.local_name}` : ""}
                       </option>
                     ))}
                   </select>
                 </label>
+                <label><span>Servings in this plan</span><input type="number" required min="0.01" max="1000" step="0.01" value={editor.values.portions?.[slot.key]?.servings ?? 1} onChange={e => patchPortion(slot.key, { servings: Number(e.target.value) })} /></label>
+                <label><span>Portion instructions</span><input maxLength={500} placeholder="e.g. 6 eggs, divided across the day" value={editor.values.portions?.[slot.key]?.instructions || ""} onChange={e => patchPortion(slot.key, { instructions: e.target.value })} /></label>
+                {catalog.mealSlots.find(m => m.mealID === editor.values[slot.key])?.combination_items?.map(component => <label key={component.dish_id}><span>{catalog.mealSlots.find(m => m.mealID === component.dish_id)?.mealName || 'Dish'} servings per combination serving</span><input type="number" required min="0.01" max="1000" step="0.01" value={editor.values.portions?.[slot.key]?.components?.[component.dish_id] ?? component.portion_multiplier ?? 1} onChange={e => patchPortion(slot.key, { components: { ...editor.values.portions?.[slot.key]?.components, [component.dish_id]: Number(e.target.value) } })} /></label>)}
+                </fieldset>
               ))}
             </div>
             {offline && (
@@ -619,9 +644,9 @@ export default function App({ mode = "public" }: { mode?: WorkspaceMode }) {
         <MealForm
           catalog={catalog}
           close={() => setShowMealForm(false)}
-          saved={(name) => {
+          saved={(name, id) => {
             setShowMealForm(false);
-            setMealDetail({ name, slot: "meal" });
+            setMealDetail({ name, id, slot: "meal" });
             setToast({
               kind: "success",
               message: `“${name}” is now available in the meal picker.`,
@@ -667,7 +692,7 @@ function EmptyPlans({ onCreate }: { onCreate?: () => void }) {
       <p>
         {onCreate
           ? "Create your first weekly plan, then fill it one day at a time."
-          : "Sign in as a professional to create and manage meal plans."}
+          : "Sign in to create and manage your own meal plans."}
       </p>
       {onCreate && (
         <button className="primary" onClick={onCreate}>

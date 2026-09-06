@@ -10,7 +10,7 @@ function setup(duplicate = null) {
     fooditems: { count: async () => 1 },
     recipe_food_items: { createMany: async args => writes.push(args), deleteMany: async () => {} },
   };
-  const sandbox = { exports: {}, require: name => name === 'uuid' ? { v4: () => 'recipe' } : {} };
+  const sandbox = { exports: {}, require: name => name === 'uuid' ? { v4: () => 'recipe' } : name.includes('meal_totals') ? require('../globals/helpers/meal_totals') : {} };
   vm.runInNewContext(fs.readFileSync(require.resolve('../controller/recipes/recipes'), 'utf8') + '\nexports.saveForTest = saveRecipe;', sandbox);
   return { save: sandbox.exports.saveForTest, tx, writes };
 }

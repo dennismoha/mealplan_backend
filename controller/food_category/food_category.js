@@ -18,7 +18,11 @@ exports.updateFoodCategory = async (req, res) => {
   const Category = await prisma.foodcategory.update({ data: { category_name: categoryName, description, image_url: imageURL }, where: { food_categoryID: id } });
   res.status(200).json({ message: 'Successfully updated the food category details', Category });
 };
-exports.deleteFoodCategory = async (req, res) => { await prisma.foodcategory.delete({ where: { food_categoryID: req.params.id } }); res.status(204).send(); };
+exports.deleteFoodCategory = async (req, res) => {
+  if (await prisma.fooditems.count({ where: { category_id: req.params.id } }) || await prisma.foodsubcategory.count({ where: { food_category_id: req.params.id } })) return res.status(409).json({ message: 'Move or remove this category’s food items and subcategories before deleting it.' });
+  try { await prisma.foodcategory.delete({ where: { food_categoryID: req.params.id } }); res.sendStatus(204); }
+  catch (error) { if (error.code === 'P2003') return res.status(409).json({ message: 'This category is still referenced.' }); if (error.code === 'P2025') return res.status(404).json({ message: 'Category not found' }); throw error; }
+};
 exports.getFoodSubcategoryDetails = async (req, res) => {
   const rows = await prisma.foodcategory.findMany({ include: { foodsubcategory: true }, orderBy: { category_name: 'asc' } });
   const data = rows.map(({ foodsubcategory, ...category }) => ({ ...category, subcategories: foodsubcategory }));

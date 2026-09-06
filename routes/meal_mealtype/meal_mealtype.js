@@ -6,6 +6,7 @@ const verifyJwt = require('../../config/auth_token');
 const { requireRoles } = require('../../middlewares/validator/auth/user_role_checker');
 
 const router = express.Router();
+router.use((req, res, next) => ['GET', 'HEAD'].includes(req.method) ? next() : res.status(410).json({ message: 'This legacy relationship API is read-only. Use the canonical dish editor or meal combinations.' }));
 
 router.get('/all', mealmealTypeController.getAllMealMealTypes); // fetch all mealTypes
 router.get('/selection', mealmealTypeController.getMealSelection); // fetch meals and mealtypes

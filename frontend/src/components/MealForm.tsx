@@ -1,40 +1,46 @@
 import { FormEvent, useState } from "react";
-import type { Catalog } from "../api";
-import { useCreateMealMutation } from "../store/mealPlanApi";
+import type { Catalog, Meal } from "../api";
+import { useCreateMealMutation, useUpdateDishMutation } from "../store/mealPlanApi";
 
 type IngredientDraft = {
   selected: boolean;
   quantity: string;
   unit: string;
   notes: string;
+  grams?: string;
 };
 type SourceDraft = { source_type: string; source_url: string; title: string };
 
 export default function MealForm({
   catalog,
+  meal,
   close,
   saved,
 }: {
   catalog: Catalog;
+  meal?: Meal;
   close: () => void;
-  saved: (name: string) => void;
+  saved: (name: string, id?: string) => void;
 }) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [localName, setLocalName] = useState("");
-  const [primaryImage, setPrimaryImage] = useState("");
-  const [imageUrls, setImageUrls] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
-  const [pronunciationUrl, setPronunciationUrl] = useState("");
-  const [countryId, setCountryId] = useState("");
+  const [name, setName] = useState(meal?.mealName || "");
+  const [description, setDescription] = useState(meal?.description || "");
+  const [localName, setLocalName] = useState(meal?.local_name || "");
+  const [primaryImage, setPrimaryImage] = useState(meal?.image_url || "");
+  const [imageUrls, setImageUrls] = useState(meal?.meal_images?.map(i => i.image_url).join("\n") || "");
+  const [videoUrl, setVideoUrl] = useState(meal?.video_url || "");
+  const [pronunciationUrl, setPronunciationUrl] = useState(meal?.pronunciation_url || "");
+  const [countryId, setCountryId] = useState(meal?.country_id ? String(meal.country_id) : "");
   const [ingredients, setIngredients] = useState<
     Record<string, IngredientDraft>
-  >({});
-  const [sources, setSources] = useState<SourceDraft[]>([
+  >(Object.fromEntries((meal?.meal_food_items || []).map(f => [f.food_item_id, { selected: true, quantity: f.quantity || "", unit: f.unit || "", notes: f.preparation_notes || "", grams: f.grams ? String(f.grams) : "" }])));
+  const [sources, setSources] = useState<SourceDraft[]>(meal?.meal_preparation_sources?.map(s => ({ source_type: s.source_type, source_url: s.source_url, title: s.title || "" })) || [
     { source_type: "youtube", source_url: "", title: "" },
   ]);
   const [error, setError] = useState("");
-  const [createMeal, { isLoading }] = useCreateMealMutation();
+  const [createMeal, createState] = useCreateMealMutation();
+  const [updateDish, updateState] = useUpdateDishMutation();
+  const isLoading = createState.isLoading || updateState.isLoading;
+  const [servings, setServings] = useState(meal?.servings || 1);
 
   const updateIngredient = (id: string, patch: Partial<IngredientDraft>) =>
     setIngredients((current) => ({
@@ -56,6 +62,7 @@ export default function MealForm({
       .filter((food) => ingredients[food.food_itemID]?.selected)
       .map((food) => ({
         food_item_id: food.food_itemID,
+        grams: ingredients[food.food_itemID].grams ? Number(ingredients[food.food_itemID].grams) : null,
         quantity: ingredients[food.food_itemID].quantity || undefined,
         unit: ingredients[food.food_itemID].unit || undefined,
         preparation_notes: ingredients[food.food_itemID].notes || undefined,
@@ -68,14 +75,15 @@ export default function MealForm({
     if (primaryImage.trim() && !mealImages.includes(primaryImage.trim()))
       mealImages.unshift(primaryImage.trim());
     try {
-      await createMeal({
+      const body = {
+        servings,
         mealName: name.trim(),
         description: description.trim(),
         local_name: localName.trim() || undefined,
         image_url: primaryImage.trim() || mealImages[0] || undefined,
         video_url: videoUrl.trim() || undefined,
         pronunciation_url: pronunciationUrl.trim() || undefined,
-        country_id: countryId ? Number(countryId) : undefined,
+        country_id: countryId ? Number(countryId) : null,
         foodItems,
         preparationSources: sources
           .filter((source) => source.source_url.trim())
@@ -85,8 +93,9 @@ export default function MealForm({
             title: source.title.trim() || undefined,
           })),
         mealImages,
-      }).unwrap();
-      saved(name.trim());
+      };
+      const result = meal ? await updateDish({ id: meal.mealID, body }).unwrap() : await createMeal(body).unwrap();
+      saved(name.trim(), (result as { data: { mealTypesID: string } }).data.mealTypesID);
     } catch (caught) {
       const response = caught as {
         data?: { errors?: { message?: string }; message?: string };
@@ -114,12 +123,14 @@ export default function MealForm({
           ×
         </button>
         <span className="eyebrow">Build a reusable meal</span>
-        <h2>Create meal</h2>
+        <h2>{meal ? "Edit dish" : "Create dish"}</h2>
         <p className="modal-copy">
           Combine food items into a named dish. It will become available in
           every meal-plan slot. Then open the meal to create its recipe; these ingredients and quantities will be filled in for you.
         </p>
         <div className="stack-fields">
+          {meal && catalog.recipes.some(r => r.meal_typeID === meal.mealID) && <p>This dish has a recipe. Edit its recipe separately to change the cooking method and recipe ingredients; these fields describe the base dish.</p>}
+          <label><span>Recipe yield (servings)</span><input type="number" min={1} required value={servings} onChange={e => setServings(Number(e.target.value))} /></label>
           <div className="form-columns">
             <label>
               <span>Meal name</span>
@@ -192,6 +203,7 @@ export default function MealForm({
                     </label>
                     {draft.selected && (
                       <div className="ingredient-fields">
+                        <input aria-label="Ingredient weight in grams" type="number" min="0.01" step="0.01" value={draft.grams || ""} onChange={e => updateIngredient(food.food_itemID, { grams: e.target.value })} placeholder="Weight (g) for totals" />
                         <input
                           value={draft.quantity}
                           onChange={(event) =>
@@ -351,7 +363,7 @@ export default function MealForm({
             Cancel
           </button>
           <button className="primary" disabled={isLoading}>
-            {isLoading ? "Creating…" : "Create meal"}
+            {isLoading ? "Saving…" : meal ? "Save dish" : "Create dish"}
           </button>
         </div>
       </form>

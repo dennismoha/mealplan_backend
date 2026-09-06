@@ -55,7 +55,7 @@ exports.getCatalog = async (req, res) => {
     }),
     getMealTypes(),
     Promise.resolve([]),
-    prisma.mealmealtype.findMany({ include: { meals: true, mealtype: true } }),
+    Promise.resolve([]),
     prisma.recipe.findMany({ orderBy: { title: "asc" } }),
     prisma.countries.findMany({ orderBy: { name: "asc" } }),
     prisma.food_item_countries.findMany(),
@@ -96,6 +96,7 @@ exports.getCatalog = async (req, res) => {
   }));
   recipes = recipes.map((recipe) => ({
     ...recipe,
+    ingredient_links: recipeFoodLinks.filter(link => link.recipe_id === recipe.recipe_ID),
     foodItems: foodItems.filter((food) =>
       recipeFoodLinks.some(
         (link) =>

@@ -1069,7 +1069,7 @@ paths:
   /meal/meal-plan/mine:
     get:
       tags: [meal-plan]
-      summary: List meal plans owned by the signed-in professional
+      summary: List meal plans owned by the signed-in member, professional, or administrator
       security:
         - bearerAuth: []
       responses:
@@ -1626,7 +1626,7 @@ paths:
               properties:
                 meal_name:
                   type: string
-                  description: Unique name; immutable after creation to preserve planner references.
+                  description: Unique meal name. Planner UUID references survive renaming.
                 description:
                   type: string
                 image_url:
@@ -1643,6 +1643,12 @@ paths:
                     properties:
                       dish_id:
                         type: string
+                      portion_multiplier:
+                        type: number
+                        exclusiveMinimum: true
+                        minimum: 0
+                        default: 1
+                        description: Servings of this component dish.
                       portions:
                         type: string
                       notes:
@@ -1681,7 +1687,7 @@ paths:
               properties:
                 meal_name:
                   type: string
-                  description: Unique name; immutable after creation to preserve planner references.
+                  description: Unique meal name. Planner UUID references survive renaming.
                 description:
                   type: string
                 image_url:
@@ -1698,6 +1704,12 @@ paths:
                     properties:
                       dish_id:
                         type: string
+                      portion_multiplier:
+                        type: number
+                        exclusiveMinimum: true
+                        minimum: 0
+                        default: 1
+                        description: Servings of this component dish.
                       portions:
                         type: string
                       notes:
@@ -1713,6 +1725,107 @@ paths:
           description: Administrator or professional access required
         '409':
           description: Duplicate name or concurrent change
+
+  /meal-types/details/{id}/summary:
+    get:
+      tags: [calculations]
+      summary: Per-serving dish or combination nutrition, ingredient weights and cost
+      description: Uses gram weights and serving yields. Missing quantities, nutrition and prices are explicitly reported; currencies are never combined.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Calculated totals with completeness flags and missing-data lists
+        '404':
+          description: Meal or plan not found
+
+  /meal/meal-plan/{id}/summary:
+    get:
+      tags: [calculations]
+      summary: Daily and weekly totals, shopping list and grouped currency estimates
+      description: Uses scheduled plan portions, component overrides, gram weights and serving yields. Shopping rows include recorded price date, source and location; price_warnings identify undated prices or prices older than 30 days. Missing quantities, nutrition and prices are explicitly reported; currencies are never combined.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Calculated totals with completeness flags and missing-data lists
+        '404':
+          description: Meal or plan not found
+
+  /food/fooditems/{id}/nutrition:
+    put:
+      tags: [food-items]
+      summary: Enter or update food nutrition and price (administrator)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Nutrients are for serving_size_g; price is always per 100 grams. Null means unknown, zero is a known zero. Saving a non-null price requires price_checked_at, price_source and price_location. Omitted fields are preserved; nutrition edits do not refresh the price date.
+              properties:
+                serving_size_g:
+                  type: number
+                  nullable: true
+                energy_kcal:
+                  type: number
+                  nullable: true
+                protein_g:
+                  type: number
+                  nullable: true
+                carbohydrates_g:
+                  type: number
+                  nullable: true
+                fat_g:
+                  type: number
+                  nullable: true
+                fiber_g:
+                  type: number
+                  nullable: true
+                price_per_100g:
+                  type: number
+                  nullable: true
+                price_checked_at:
+                  type: string
+                  format: date
+                  nullable: true
+                  description: Date the price was checked, today or earlier.
+                price_source:
+                  type: string
+                  maxLength: 255
+                price_location:
+                  type: string
+                  maxLength: 150
+                currency:
+                  type: string
+                  example: KES
+                source:
+                  type: string
+      responses:
+        '200':
+          description: Nutrition and price saved
+        '400':
+          description: Invalid numeric values or currency
+        '403':
+          description: Administrator access required
+        '404':
+          description: Food item not found
 
 components:
   securitySchemes:
@@ -2140,7 +2253,7 @@ components:
           type: string
         morning_break:
           type: string
-        lunch:
+        Lunch:
           type: string
         evening_break:
           type: string
@@ -2272,16 +2385,42 @@ components:
           format: uri
           nullable: true
         
+    PlanPortions:
+      type: object
+      description: Keys are breakfast, morning_break, lunch, evening_break and supper. Omitted slots default to one serving. Send the full portions object when editing. Portion instructions are descriptive only. Components override dish servings within a combination and multiply the slot serving quantity.
+      additionalProperties:
+        type: object
+        required: [servings]
+        properties:
+          servings:
+            type: number
+            minimum: 0.01
+            maximum: 1000
+          instructions:
+            type: string
+            maxLength: 500
+          components:
+            type: object
+            additionalProperties:
+              type: number
+              minimum: 0.01
+              maximum: 1000
+      example:
+        breakfast:
+          servings: 6
+          instructions: Six eggs when the recipe yields one egg per serving.
     updateMealPlan:
       type: object
       properties:
+        portions:
+          $ref: "#/components/schemas/PlanPortions"
         day_of_week:
           type: string
         breakfast:
           type: string
         morning_break:
           type: string
-        lunch:
+        Lunch:
           type: string
         evening_break:
           type: string
@@ -2293,6 +2432,8 @@ components:
     AddNewMealPlan:
       type: object
       properties:
+        portions:
+          $ref: "#/components/schemas/PlanPortions"
         day_of_week:
           type: string
           description: This is the day of the week

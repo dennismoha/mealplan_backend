@@ -12,8 +12,9 @@ function validateCombination(body) {
   const dishes = body.dishes.map((dish, display_order) => {
     if (!dish || typeof dish.dish_id !== 'string' || !dish.dish_id || ids.has(dish.dish_id)) invalid('Choose distinct dishes');
     ids.add(dish.dish_id);
+    if (dish.portion_multiplier != null && (!Number.isFinite(Number(dish.portion_multiplier)) || Number(dish.portion_multiplier) <= 0)) invalid('Dish servings must be positive');
     for (const key of ['portions', 'notes']) if (dish[key] != null && (typeof dish[key] !== 'string' || dish[key].length > (key === 'portions' ? 100 : 65535))) invalid(`Invalid dish ${key}`);
-    return { dish_id: dish.dish_id, portions: dish.portions?.trim() || null, notes: dish.notes?.trim() || null, display_order };
+    return { dish_id: dish.dish_id, portion_multiplier: dish.portion_multiplier == null ? 1 : Number(dish.portion_multiplier), portions: dish.portions?.trim() || null, notes: dish.notes?.trim() || null, display_order };
   });
   return { meal_name, description: text('description'), image_url: text('image_url'), serving_instructions: text('serving_instructions'), dishes };
 }

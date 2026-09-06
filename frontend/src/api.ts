@@ -1,4 +1,7 @@
+export type MealSlot = "breakfast" | "morning_break" | "lunch" | "evening_break" | "supper";
+export type PlanPortion = { servings: number; instructions?: string; components?: Record<string, number> };
 export type DayMeals = {
+  portions?: Partial<Record<MealSlot, PlanPortion>>;
   breakfast: string;
   morning_break: string;
   lunch: string;
@@ -48,6 +51,11 @@ export type FoodSubcategory = {
   food_category_id: string;
 };
 export type Nutrition = {
+  price_checked_at?: string;
+  price_source?: string;
+  price_location?: string;
+  price_per_100g?: number;
+  currency?: string;
   serving_size_g?: number;
   energy_kcal?: number;
   protein_g?: number;
@@ -90,8 +98,10 @@ export type FoodItem = {
   countries?: Country[];
   nutrition?: Nutrition;
 };
-export type CombinationItem = { id?: number; dish_id: string; portions?: string; notes?: string; display_order?: number };
+export type CombinationItem = { id?: number; dish_id: string; portions?: string; notes?: string; display_order?: number; portion_multiplier?: number };
 export type MealType = {
+  owner_user_id?: number;
+  servings?: number;
   meal_kind?: "dish" | "combination";
   serving_instructions?: string;
   combination_items?: CombinationItem[];
@@ -114,6 +124,8 @@ export type MealAssignment = {
   mealTypesID: string;
 };
 export type Meal = {
+  owner_user_id?: number;
+  servings?: number;
   meal_kind?: "dish" | "combination";
   serving_instructions?: string;
   combination_items?: CombinationItem[];
@@ -127,6 +139,7 @@ export type Meal = {
   country_id?: number;
   meal_food_items?: {
     food_item_id: string;
+    grams?: number;
     quantity?: string;
     unit?: string;
     preparation_notes?: string;
@@ -158,6 +171,7 @@ export type Recipe = {
   video_url?: string;
   owner_user_id?: number;
   foodItems?: FoodItem[];
+  ingredient_links?: { food_item_id: string; grams?: number; quantity?: string; notes?: string }[];
 };
 export type Catalog = {
   categories: FoodCategory[];

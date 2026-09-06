@@ -13,9 +13,9 @@ const { requireMealPlanOwnership } = require('../../middlewares/authorization/me
 
 router.get('/', mealplanTimeController.getAllMealplanTimes); // fetch all mealplan time
 router.get('/:id', mealplanTimeController.getMealplanTime); // fetch a single mealplan time
-router.post('/', verifyJwt, requireRoles('professional', 'admin'), validateMealplanTime, mealplanTimeController.createMealplanTime);
-router.put('/:id', verifyJwt, requireRoles('professional', 'admin'), requireMealPlanOwnership('interval-id'), validateMealplanTime, mealplanTimeController.updateMealplanTime);
-router.delete('/:id', verifyJwt, requireRoles('professional', 'admin'), requireMealPlanOwnership('interval-id'), mealplanTimeController.deleteMealplanTime);
+router.post('/', verifyJwt, requireRoles('user', 'professional', 'admin'), validateMealplanTime, mealplanTimeController.createMealplanTime);
+router.put('/:id', verifyJwt, requireRoles('user', 'professional', 'admin'), requireMealPlanOwnership('interval-id'), validateMealplanTime, mealplanTimeController.updateMealplanTime);
+router.delete('/:id', verifyJwt, requireRoles('user', 'professional', 'admin'), requireMealPlanOwnership('interval-id'), mealplanTimeController.deleteMealplanTime);
 
 
 module.exports = router;

@@ -1,3 +1,4 @@
+const { weight } = require('../../globals/helpers/meal_totals');
 const { v4: uuidv4 } = require('uuid');
 const prisma = require('../../models/prisma');
 
@@ -5,7 +6,7 @@ async function withFoodItems(recipe) {
   if (!recipe) return recipe;
   const links = await prisma.recipe_food_items.findMany({ where: { recipe_id: recipe.recipe_ID } });
   const foods = await prisma.fooditems.findMany({ where: { food_itemID: { in: links.map(link => link.food_item_id) } } });
-  return { ...recipe, foodItems: foods.map(food => ({ ...food, RecipeFoodItem: links.find(link => link.food_item_id === food.food_itemID) })) };
+  return { ...recipe, ingredient_links: links, foodItems: foods.map(food => ({ ...food, RecipeFoodItem: links.find(link => link.food_item_id === food.food_itemID) })) };
 }
 exports.list = async (req, res) => res.json({ recipes: await Promise.all((await prisma.recipe.findMany({ orderBy: { title: 'asc' } })).map(withFoodItems)) });
 const recipeFields = body => {
@@ -31,22 +32,25 @@ async function saveRecipe(tx, body, owner, existing) {
   const duplicate = await tx.recipe.findFirst({ where: { meal_typeID: mealId, ...(existing ? { idrecipe: { not: existing.idrecipe } } : {}) } });
   if (duplicate) throw Object.assign(new Error('This meal already has a recipe. Edit or delete that recipe instead.'), { status: 409 });
   const data = recipeFields(body);
+  for (const key of ['servings','prep_time','cook_time','total_time']) if (data[key] != null && (!Number.isInteger(data[key]) || data[key] < (key === 'servings' ? 1 : 0))) invalid(`Invalid ${key}`);
+  if (!existing && data.servings == null) data.servings = meal.servings || 1;
   for (const field of ['title', 'ingredients', 'instructions']) {
     const value = data[field] ?? existing?.[field];
     if (typeof value !== 'string' || !value.trim()) invalid(`${field} is required`);
     if (data[field] !== undefined) data[field] = value.trim();
   }
   let foods = body.foodItems;
-  if (!existing && foods === undefined) foods = meal.meal_type_food_items.map(item => ({ id: item.food_item_id, quantity: [item.quantity, item.unit].filter(Boolean).join(' '), notes: item.preparation_notes }));
+  if (!existing && foods === undefined) foods = meal.meal_type_food_items.map(item => ({ id: item.food_item_id, quantity: [item.quantity, item.unit].filter(Boolean).join(' '), notes: item.preparation_notes, grams: weight(item) }));
   if (foods !== undefined) {
     if (!Array.isArray(foods) || foods.some(item => !item || typeof item.id !== 'string')) invalid('Invalid linked food items');
+    if (foods.some(item => item.grams != null && (!Number.isFinite(Number(item.grams)) || Number(item.grams) <= 0))) invalid('Ingredient grams must be positive');
     const ids = foods.map(item => item.id);
     if (new Set(ids).size !== ids.length || await tx.fooditems.count({ where: { food_itemID: { in: ids } } }) !== ids.length) invalid('Choose distinct existing food items');
   }
   const row = existing ? await tx.recipe.update({ where: { idrecipe: existing.idrecipe }, data }) : await tx.recipe.create({ data: { ...data, meal_typeID: mealId, recipe_ID: uuidv4(), owner_user_id: owner } });
   if (foods !== undefined) {
     if (existing) await tx.recipe_food_items.deleteMany({ where: { recipe_id: row.recipe_ID } });
-    if (foods.length) await tx.recipe_food_items.createMany({ data: foods.map(item => ({ recipe_id: row.recipe_ID, food_item_id: item.id, quantity: item.quantity || null, notes: item.notes || null })) });
+    if (foods.length) await tx.recipe_food_items.createMany({ data: foods.map(item => ({ recipe_id: row.recipe_ID, food_item_id: item.id, grams: item.grams == null ? null : Number(item.grams), quantity: item.quantity || null, notes: item.notes || null })) });
   }
   return row;
 }

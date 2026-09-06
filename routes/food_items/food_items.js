@@ -42,4 +42,5 @@ router.put('/:id/local-names/:nameId/pronunciation', verifyJwt, requireRoles('ad
 router.put('/:id', verifyJwt, requireRoles('admin'), foodItemsController.updateFoodItemById);
 router.delete('/:id', verifyJwt, requireRoles('admin'), foodItemsController.deleteFoodItemById);
 
+router.put('/:id/nutrition', verifyJwt, requireRoles('admin'), require('../../controller/food_items/nutrition').save);
 module.exports = router;

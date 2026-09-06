@@ -2,7 +2,7 @@ const prisma = require('../../models/prisma');
 
 const requireMealPlanOwnership = source => async (req, res, next) => {
   if (req.roles === 'admin') return next();
-  if (req.roles !== 'professional') return res.status(403).json({ message: 'Only professionals and administrators can manage meal plans' });
+  if (!['user', 'professional'].includes(req.roles)) return res.status(403).json({ message: 'Sign in to manage your meal plans' });
 
   const where = source === 'interval-id'
     ? { idmealPlanWeek: req.params.id }

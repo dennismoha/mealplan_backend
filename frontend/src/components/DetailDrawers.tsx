@@ -1,3 +1,6 @@
+import NutritionForm from "./NutritionForm";
+import TotalsPanel from "./TotalsPanel";
+import MealForm from "./MealForm";
 import CombinationForm from "./CombinationForm";
 import RecipeForm from "./RecipeForm";
 import { useSelector } from "react-redux";
@@ -6,7 +9,7 @@ import { useState } from "react";
 import { LocalNamesList } from "./FoodLocalNames";
 import type { Catalog, FoodItem, Recipe } from "../api";
 import { FoodImage, AddCatalogModal } from "./CatalogView";
-import { useDeleteFoodItemMutation, useDeleteFoodPronunciationMutation, useGetFoodPronunciationQuery } from "../store/mealPlanApi";
+import { useDeleteDishMutation, useDeleteFoodItemMutation, useDeleteFoodPronunciationMutation, useGetFoodPronunciationQuery } from "../store/mealPlanApi";
 
 const lines = (value?: string) =>
   (value || "")
@@ -30,6 +33,9 @@ export function MealDrawer({
   onFood: (food: FoodItem) => void;
 }) {
   const user = useSelector((state: RootState) => state.auth.user);
+  const [editingDish, setEditingDish] = useState(false);
+  const [removeDish, removingDish] = useDeleteDishMutation();
+  const [dishError, setDishError] = useState("");
   const [editingCombination, setEditingCombination] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState(false);
   const meal = catalog.mealSlots.find(
@@ -57,8 +63,15 @@ export function MealDrawer({
               ingredient.toLowerCase().includes(food.food_name.toLowerCase()),
             ) || name.toLowerCase().includes(food.food_name.toLowerCase()),
         );
+  const canManageDish = user?.role === "admin" || (user?.role === "professional" && meal?.owner_user_id === user.id);
+  const deleteDish = async () => {
+    if (!meal || !window.confirm(`Delete ${meal.mealName}? Referenced meals cannot be deleted.`)) return;
+    try { await removeDish(meal.mealID).unwrap(); close(); } catch (error) { setDishError((error as { data?: { message?: string } }).data?.message || "Could not delete meal"); }
+  };
+  const dishActions = canManageDish && <div className="recording-actions"><button className="secondary" onClick={() => meal?.meal_kind === "combination" ? setEditingCombination(true) : setEditingDish(true)}>Edit {meal?.meal_kind === "combination" ? "combination" : "dish"}</button><button className="danger" disabled={removingDish.isLoading} onClick={deleteDish}>Delete</button>{dishError && <p role="alert" className="form-error">{dishError}</p>}</div>;
+  if (editingDish && meal) return <MealForm catalog={catalog} meal={meal} close={() => setEditingDish(false)} saved={() => setEditingDish(false)} />;
   if (editingCombination && meal) return <CombinationForm catalog={catalog} meal={meal} close={() => setEditingCombination(false)} saved={() => setEditingCombination(false)} />;
-  if (meal?.meal_kind === "combination") return <div className="drawer-backdrop" onMouseDown={e => e.target === e.currentTarget && close()}><aside className="detail-drawer"><button className="close" onClick={close}>×</button><div className="drawer-body"><span className="eyebrow">Meal combination</span><h2>{meal.mealName}</h2>{meal.image_url && <img src={meal.image_url} alt={meal.mealName} style={{ width: "100%" }} />}<p>{meal.description}</p>{canManageRecipe && <button className="secondary" onClick={() => setEditingCombination(true)}>Edit combination</button>}
+  if (meal?.meal_kind === "combination") return <div className="drawer-backdrop" onMouseDown={e => e.target === e.currentTarget && close()}><aside className="detail-drawer"><button className="close" onClick={close}>×</button><div className="drawer-body"><TotalsPanel kind="dish" id={meal.mealID} /><span className="eyebrow">Meal combination</span><h2>{meal.mealName}</h2>{meal.image_url && <img src={meal.image_url} alt={meal.mealName} style={{ width: "100%" }} />}<p>{meal.description}</p>{dishActions}
     {meal.combination_items?.map(component => { const dish = catalog.mealSlots.find(m => m.mealID === component.dish_id); const dishRecipe = catalog.recipes.find(r => r.meal_typeID === component.dish_id); return <details className="drawer-section" key={component.dish_id}><summary><strong>{dish?.mealName || "Dish"}</strong>{component.portions ? ` · ${component.portions}` : ""}</summary><p>{component.notes}</p><p>{dish?.description}</p><h3>Ingredients</h3><ul>{(dishRecipe ? (dishRecipe.ingredients || "").split(/\r?\n/).filter(Boolean) : dish?.meal_food_items?.map(f => [f.quantity, f.unit, f.fooditems?.food_name, f.preparation_notes].filter(Boolean).join(" ")) || []).map((line, index) => <li key={index}>{line}</li>)}</ul>{dishRecipe ? <><h3>{dishRecipe.title} — Method</h3><ol>{(dishRecipe.instructions || "").split(/\r?\n/).filter(Boolean).map((step, index) => <li key={index}>{step}</li>)}</ol></> : <p>No recipe yet for this dish.</p>}{(dishRecipe?.video_url || dish?.video_url) && <a href={dishRecipe?.video_url || dish?.video_url} target="_blank" rel="noreferrer">Watch preparation →</a>}{dish?.meal_preparation_sources?.map(source => <p key={source.id}><a href={source.source_url} target="_blank" rel="noreferrer">{source.title || source.source_type}</a></p>)}</details> })}
     {meal.serving_instructions && <section className="drawer-section"><h3>Serve together</h3><p style={{ whiteSpace: "pre-line" }}>{meal.serving_instructions}</p></section>}
     </div></aside></div>;
@@ -84,7 +97,8 @@ export function MealDrawer({
         </div>
         <div className="drawer-body">
           <span className="eyebrow">{recipe?.cuisine || "Home cooking"}</span>
-          <h2>{name}</h2>
+          <h2>{meal?.mealName || name}</h2>
+          {dishActions}
           {meal && canManageRecipe && <button className="secondary" onClick={() => setEditingRecipe(true)}>{recipe ? "Edit / delete recipe" : "Create recipe from this meal"}</button>}
           {!recipe && <p className="muted">No recipe yet. The ingredients and preparation sources below were saved with the meal.</p>}
           {meal?.local_name && (
@@ -122,6 +136,7 @@ export function MealDrawer({
             </section>
           )}
           <RecipeMeta recipe={recipe} />
+          {meal && <TotalsPanel kind="dish" id={meal.mealID} />}
           {(recipe ? ingredients.length > 0 : Boolean(meal?.meal_food_items?.length)) && (
             <section className="drawer-section">
               <h3>Ingredients</h3>
@@ -133,7 +148,7 @@ export function MealDrawer({
                         {item.fooditems?.food_name || "Ingredient"}
                         {item.quantity
                           ? ` · ${item.quantity}${item.unit ? ` ${item.unit}` : ""}`
-                          : ""}
+                          : item.grams ? ` · ${item.grams} g` : ""}
                         {item.preparation_notes
                           ? ` — ${item.preparation_notes}`
                           : ""}
@@ -238,6 +253,7 @@ export function FoodDrawer({
   close: () => void;
   canManage?: boolean;
 }) {
+  const [nutritionEditing, setNutritionEditing] = useState(false);
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState("");
@@ -247,6 +263,8 @@ export function FoodDrawer({
     try { await remove(item.food_itemID).unwrap(); close(); }
     catch (error) { setError((error as { data?: { message?: string } }).data?.message || "Could not delete the food item."); setConfirmDelete(false); }
   };
+  item = catalog.foodItems.find(food => food.food_itemID === item.food_itemID) || item;
+  if (nutritionEditing) return <NutritionForm item={item} close={() => setNutritionEditing(false)} />;
   if (editing) return <AddCatalogModal kind="food" item={item} catalog={catalog} close={() => setEditing(false)} saved={close} fail={setError} />;
   const category = catalog.categories.find(
     (c) => c.food_categoryID === item.category_id,
@@ -280,6 +298,7 @@ export function FoodDrawer({
           <h2>{item.english_name || item.food_name}</h2>
           {canManage && <div className="recording-actions">
             <button type="button" className="secondary" onClick={() => { setError(""); setEditing(true); }}>Edit food item</button>
+            <button className="secondary" onClick={() => setNutritionEditing(true)}>Nutrition / price</button>
             <button type="button" className="danger" disabled={deleteState.isLoading} onClick={() => setConfirmDelete(true)}>Delete food item</button>
           </div>}
           {confirmDelete && <div role="alert">
@@ -309,24 +328,25 @@ export function FoodDrawer({
               <h3>Nutrition per {item.nutrition.serving_size_g || 100}g</h3>
               <div className="nutrition-grid">
                 <div>
-                  <strong>{item.nutrition.energy_kcal || "—"}</strong>
+                  <strong>{item.nutrition.energy_kcal ?? "—"}</strong>
                   <span>kcal</span>
                 </div>
                 <div>
-                  <strong>{item.nutrition.protein_g || "—"}g</strong>
+                  <strong>{item.nutrition.protein_g ?? "—"}g</strong>
                   <span>protein</span>
                 </div>
                 <div>
-                  <strong>{item.nutrition.carbohydrates_g || "—"}g</strong>
+                  <strong>{item.nutrition.carbohydrates_g ?? "—"}g</strong>
                   <span>carbs</span>
                 </div>
                 <div>
-                  <strong>{item.nutrition.fiber_g || "—"}g</strong>
+                  <strong>{item.nutrition.fiber_g ?? "—"}g</strong>
                   <span>fiber</span>
                 </div>
               </div>
             </section>
           )}
+          <section className="drawer-section"><h3>Recorded food price</h3><p>{item.nutrition?.price_per_100g == null ? 'No price recorded' : `${item.nutrition.currency} ${Number(item.nutrition.price_per_100g).toFixed(2)} per 100 g`}</p><p>{item.nutrition?.price_location || 'Location unknown'} · Checked {item.nutrition?.price_checked_at?.slice(0, 10) || 'date unknown'}</p><p>Source: {item.nutrition?.price_source || 'Not recorded'}</p></section>
           <section className="drawer-section">
             <h3>Countries</h3>
             <div className="tag-row">

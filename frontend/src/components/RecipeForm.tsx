@@ -21,17 +21,19 @@ function RecipeEditor({ catalog, recipe, mealId, close, saved }: { catalog: Cata
   const canEdit = user?.role === "admin" || (user?.role === "professional" && (!recipe || recipe.owner_user_id === user.id))
   const [title, setTitle] = useState(recipe?.title ?? meal?.mealName ?? "")
   const [description, setDescription] = useState(recipe?.description ?? meal?.description ?? "")
-  const [ingredients, setIngredients] = useState(recipe?.ingredients ?? meal?.meal_food_items?.map(item => [item.quantity, item.unit, item.fooditems?.food_name, item.preparation_notes ? `(${item.preparation_notes})` : ""].filter(Boolean).join(" ")).join("\n") ?? "")
+  const [ingredients, setIngredients] = useState(recipe?.ingredients ?? meal?.meal_food_items?.map(item => [item.quantity || (item.grams ? String(item.grams) : ""), item.unit || (item.grams ? "g" : ""), item.fooditems?.food_name, item.preparation_notes ? `(${item.preparation_notes})` : ""].filter(Boolean).join(" ")).join("\n") ?? "")
   const [instructions, setInstructions] = useState(recipe?.instructions ?? "")
   const [video, setVideo] = useState(recipe?.video_url ?? meal?.video_url ?? "")
   const [foods, setFoods] = useState<string[]>(recipe ? recipe.foodItems?.map(f => f.food_itemID) || [] : meal?.meal_food_items?.map(f => f.food_item_id) || [])
+  const [grams, setGrams] = useState<Record<string, string>>(Object.fromEntries((recipe ? recipe.ingredient_links || [] : meal?.meal_food_items || []).map(f => [f.food_item_id, f.grams != null ? String(f.grams) : ("unit" in f && ["g", "kg", "grams", "kilograms"].includes(String(f.unit).toLowerCase()) && Number(f.quantity) > 0 ? String(Number(f.quantity) * (String(f.unit).toLowerCase().startsWith("k") ? 1000 : 1)) : "")])));
+  const [servings, setServings] = useState(recipe?.servings || meal?.servings || 1);
   const [error, setError] = useState("")
   const [create, creating] = useCreateRecipeMutation(); const [update, updating] = useUpdateRecipeMutation(); const [remove, removing] = useDeleteRecipeMutation()
   const busy = creating.isLoading || updating.isLoading || removing.isLoading
   const fail = (error: unknown) => setError((error as { data?: { message?: string } }).data?.message || "Could not save the recipe.")
   const submit = async (e: FormEvent) => {
     e.preventDefault(); setError("")
-    const body = { title: title.trim(), description, meal_typeID: mealId, ingredients, instructions, video_url: video || null, foodItems: foods.map(id => ({ id })) }
+    const body = { servings, title: title.trim(), description, meal_typeID: mealId, ingredients, instructions, video_url: video || null, foodItems: foods.map(id => ({ id, grams: grams[id] ? Number(grams[id]) : null })) }
     try { if (recipe?.idrecipe) await update({ id: recipe.idrecipe, body }).unwrap(); else await create(body).unwrap(); saved() } catch (error) { fail(error) }
   }
   const deleteRecipe = async () => {
@@ -41,12 +43,12 @@ function RecipeEditor({ catalog, recipe, mealId, close, saved }: { catalog: Cata
   return <form onSubmit={submit}>
     {recipe && <p className="field-help">This meal already has a recipe. {canEdit ? "Edit it below or delete it." : "Only its author or an administrator can edit or delete it."}</p>}
     <fieldset disabled={!canEdit || busy} className="stack-fields">
-      <label><span>Recipe title</span><input required maxLength={255} value={title} onChange={e => setTitle(e.target.value)} /></label>
+      <label><span>Recipe yield (servings)</span><input type="number" min={1} required value={servings} onChange={e => setServings(Number(e.target.value))} /></label><label><span>Recipe title</span><input required maxLength={255} value={title} onChange={e => setTitle(e.target.value)} /></label>
       <label><span>Description</span><textarea value={description} onChange={e => setDescription(e.target.value)} /></label>
       <label><span>Ingredients, one per line</span><textarea required value={ingredients} onChange={e => setIngredients(e.target.value)} /></label>
       <label><span>Cooking method, one step per line</span><textarea required value={instructions} onChange={e => setInstructions(e.target.value)} /></label>
       <label><span>Preparation video URL</span><input type="url" value={video} onChange={e => setVideo(e.target.value)} /></label>
-      <fieldset><legend>Linked food items</legend>{catalog.foodItems.map(food => <label className="check" key={food.food_itemID}><input type="checkbox" checked={foods.includes(food.food_itemID)} onChange={e => setFoods(e.target.checked ? [...foods, food.food_itemID] : foods.filter(id => id !== food.food_itemID))} />{food.food_name}</label>)}</fieldset>
+      <fieldset><legend>Linked food items</legend>{catalog.foodItems.map(food => <label className="check" key={food.food_itemID}><input type="checkbox" checked={foods.includes(food.food_itemID)} onChange={e => setFoods(e.target.checked ? [...foods, food.food_itemID] : foods.filter(id => id !== food.food_itemID))} />{food.food_name}{foods.includes(food.food_itemID) && <input aria-label={`${food.food_name} weight in grams`} type="number" min="0.01" step="0.01" value={grams[food.food_itemID] || ""} onChange={e => setGrams({ ...grams, [food.food_itemID]: e.target.value })} placeholder="Weight (g) for totals" />}</label>)}</fieldset>
     </fieldset>
     {error && <p role="alert" className="form-error">{error}</p>}
     <div className="modal-actions">{recipe && canEdit && <button type="button" className="danger" disabled={busy} onClick={deleteRecipe}>Delete recipe</button>}<span /><button type="button" className="secondary" onClick={close}>Close</button>{canEdit && <button className="primary" disabled={busy}>{busy ? "Saving…" : recipe ? "Save changes" : "Create recipe"}</button>}</div>

@@ -111,6 +111,7 @@ export const mealPlanApi = createApi({
         method: editing ? "PUT" : "POST",
         body: {
           day_of_week: day,
+          portions: meals.portions,
           breakfast: meals.breakfast,
           morning_break: meals.morning_break,
           Lunch: meals.lunch,
@@ -128,6 +129,9 @@ export const mealPlanApi = createApi({
       }),
       invalidatesTags: ["Plans"],
     }),
+    saveNutrition: builder.mutation<unknown, { id: string; body: Record<string, unknown> }>({ query: ({ id, body }) => ({ url: `/food/fooditems/${id}/nutrition`, method: "PUT", body }), invalidatesTags: ["Catalog", "Plans"] }),
+    saveTaxonomy: builder.mutation<unknown, { kind: "category" | "subcategory"; id: string; body?: Record<string, unknown> }>({ query: ({ kind, id, body }) => ({ url: `/${kind === "category" ? "food/category" : "foodsubcategories"}/${id}`, method: body ? "PUT" : "DELETE", body }), invalidatesTags: ["Catalog"] }),
+    getTotals: builder.query<any, { kind: "dish" | "plan"; id: string }>({ query: ({ kind, id }) => kind === "dish" ? `/meal-types/details/${id}/summary` : `/meal/meal-plan/${id}/summary`, providesTags: ["Catalog", "Plans"] }),
     createCategory: builder.mutation<
       unknown,
       { categoryName: string; description: string; imageURL?: string }
@@ -195,6 +199,12 @@ export const mealPlanApi = createApi({
       query: ({ id, body }) => ({ url: `/meal-types/combinations${id ? `/${id}` : ""}`, method: id ? "PUT" : "POST", body }),
       invalidatesTags: ["Catalog"],
     }),
+    updateDish: builder.mutation<unknown, { id: string; body: Record<string, unknown> }>({
+      query: ({ id, body }) => ({ url: `/meal-types/edit/${id}`, method: "PUT", body }), invalidatesTags: ["Catalog", "Plans"],
+    }),
+    deleteDish: builder.mutation<unknown, string>({
+      query: id => ({ url: `/meal-types/remove/${id}`, method: "DELETE" }), invalidatesTags: ["Catalog", "Plans"],
+    }),
     createMeal: builder.mutation<unknown, Record<string, unknown>>({
       query: (body) => ({ url: "/meal-types/add", method: "POST", body }),
       invalidatesTags: ["Catalog"],
@@ -248,6 +258,9 @@ export const {
   useSaveDayMutation,
   useDeleteDayMutation,
   useCreateCategoryMutation,
+  useSaveNutritionMutation,
+  useSaveTaxonomyMutation,
+  useGetTotalsQuery,
   useCreateSubcategoryMutation,
   useCreateFoodItemMutation,
   useSaveFoodPronunciationMutation,
@@ -258,6 +271,8 @@ export const {
   useDeleteFoodItemMutation,
   useCreateRecipeMutation,
   useCreateMealMutation,
+  useUpdateDishMutation,
+  useDeleteDishMutation,
   useSaveCombinationMutation,
   useUpdateRecipeMutation,
   useDeleteRecipeMutation,
